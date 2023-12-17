@@ -93,7 +93,7 @@ class Material {
       const auto n = si.n;
       const auto v = -wo;
 
-      wi = v - n * 2 * (v.dot(n));
+      wi = v - n * 2 * v.dot(n);
 
       return Ks;// / wi.dot(n);
     }
@@ -101,64 +101,62 @@ class Material {
     Spectrum fr_refraction(const SurfaceInteraction &si, const Direction &wo, Direction &wi) {
       // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
       const auto n = si.n;
-      const auto i = -wo;
-      const bool enters = wo.dot(n) > 0;
+      const auto v = -wo;
+      const bool enters = wo.dot(n) < 0;
 
       const Float n1 = (enters) ? 1.0 : 1.5;
       const Float n2 = (enters) ? 1.5 : 1.0;
       const Float nn = (n1/n2);
 
-      const Float cosThetaI = wo.dot(n);
+      const Float cosThetaI = n.dot(v);
 
-      const Float sin2ThetaT = nn * nn * (1 - cosThetaI * cosThetaI);
+      const Float sin2ThetaT = nn * nn * (1.0 - cosThetaI * cosThetaI);
 
-      const bool TIR = sin2ThetaT > 1.0;
+      Float r0 = (1-nn) / (1+nn);
+      r0 = r0*r0;
+      const Float R= r0 + (1-r0)*pow((1 - cosThetaI),5);
 
-      if (TIR) {
-        wi = i - n * 2 * i.dot(n);
+      if (sin2ThetaT > 1.0 || R > uniform(0, 1)) { // TIR
+        wi = v + n * 2 * cosThetaI;
         return Kt;
       }
 
       const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
 
-      wi = i * nn + n * (nn * cosThetaI - cosThetaT);
-
-      const Float R0 = (n1 - n2) / (n1 + n2) * (n1 - n2) / (n1 + n2);
-
-      Float Rschlick;
-      if (n1 <= n2) {
-        const Float a = (1 - cosThetaI);
-        Rschlick = R0 + (1 - R0) * a * a * a * a * a;
-      } else if (n1 > n2 && !TIR) {
-        const Float a = (1 - cosThetaT);
-        Rschlick = R0 + (1 - R0) * a * a * a * a * a;
-      } else {
-        Rschlick = 1.0;
-      }
-
-      const Float T = 1.0 - Rschlick;
-
-      return Kt /** T*/;
-
-      // const auto n = si.n;
-      // const auto v = -wo;
-      // const bool enters = wo.dot(n) < 0;
-
-      // const Float cosThetaI = v.dot(n);
-      // const Float sinThetaI = std::sqrt(std::max(0.0, 1.0 - cosThetaI * cosThetaI));
+      wi = v * nn + n * (nn * cosThetaI - cosThetaT);
+      return Kt;
 
       // const Float n1 = (enters) ? 1.0 : 1.5;
       // const Float n2 = (enters) ? 1.5 : 1.0;
-      // const Float f = n1/n2;
+      // const Float nn = (n1/n2);
 
-      // const Float sinThetaT = f * sinThetaI;
-      // if (sinThetaT > 1.0) {
-      //   wi = v - n * 2 * (v.dot(n)); // <---
+      // const Float cosThetaI = -i.dot(n);
+
+      // const Float sin2ThetaT = nn * nn * (1 - cosThetaI * cosThetaI);
+
+      // const bool TIR = sin2ThetaT > 1.0;
+
+      // if (TIR) {
+      //   wi = i - n * 2 * i.dot(n);
       //   return Kt;
       // }
-      // const Float cosThetaT = std::sqrt(std::max(0.0, 1.0 - sinThetaT * sinThetaT));
 
-      // wi = v * f + n * (f * cosThetaI - cosThetaT);
+      // const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
+
+      // wi = i * nn + n * (nn * cosThetaI - cosThetaT);
+
+      // const Float R0 = std::pow((n1 - n2) / (n1 + n2), 2); 
+
+      // Float Rschlick;
+      // if (n1 <= n2) {
+      //   Rschlick = R0 + (1.0 - R0) * std::pow(1.0 - cosThetaI, 5);
+      // } else if (n1 > n2 && !TIR) {
+      //   Rschlick = R0 + (1.0 - R0) * std::pow(1.0 - cosThetaT, 5);
+      // } else {
+      //   Rschlick = 1.0;
+      // }
+
+      // const Float T = 1.0 - Rschlick;
 
       // return Kt;
     }
