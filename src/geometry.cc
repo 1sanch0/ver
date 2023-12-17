@@ -2,8 +2,6 @@
 
 void makeCoordSystem(const Direction &b1, Direction &b2, Direction &b3) {
   Float eps = 1e-2;
-  Float x = std::abs(b1.norm() - 1.0);
-  Float y = b1.norm();
   assert(std::abs(b1.norm() - 1.0) < eps, "Coordinate System constructions requires a normalize vector!");
 
   if (std::abs(b1.x) > std::abs(b1.y))

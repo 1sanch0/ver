@@ -20,7 +20,7 @@ namespace {
     };
     template <typename> struct is_tuple: std::false_type {};
     template <typename ...T> struct is_tuple<std::tuple<T...>>: std::true_type {};
-};
+}
     
 /**
  * T - Data type contained in the KD Tree
@@ -202,4 +202,4 @@ auto kdtree(const C& c, std::enable_if_t<is_tuple<typename C::value_type>::value
             std::is_arithmetic_v<std::decay_t<decltype(std::get<0>(std::get<0>(std::declval<typename C::value_type>())))>>>* sfinae = nullptr) {
     return kdtree<std::tuple_size_v<std::decay_t<decltype(std::get<0>(std::declval<typename C::value_type>()))>>>(c);
 }
-};
+}

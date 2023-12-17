@@ -43,7 +43,6 @@ void CornellBox(Scene &scene) {
   auto whiteL= Direction(1, 1, 1);
   auto red   = Direction(.9, 0, 0);
   auto green = Direction(0, .9, 0);
-  auto blue  = Direction(0, 0, .9);
   auto black = Direction(0, 0, 0);
   auto pink = Direction(0.8941, 0.66667, 0.9);
   auto light_blue = Direction(0.5529, 1, 1);

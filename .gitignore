@@ -5,3 +5,4 @@ tmp/
 *.org
 *.ppm
 archive/
+build/

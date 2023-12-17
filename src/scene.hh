@@ -37,20 +37,7 @@ class Scene {
     Spectrum directLight(const SurfaceInteraction &interact) const {
       constexpr Float eps = 1e-4;
 
-      Spectrum L(0, 0, 0);
-      // for (const auto &light : lights) {
-      //   const Direction wi = (interact.p - light.p).normalize();
-      //   const Float distance = (interact.p - light.p).norm();
-
-      //   SurfaceInteraction linteract;
-      //   if (intersect(Ray(light.p + wi * eps, wi), linteract)) {
-      //     const Float interactDistance = (linteract.p - interact.p).norm();
-      //     const Direction n = linteract.n;
-      //     if (std::abs(interactDistance - distance) < eps /*&& n.dot(wi) < eps */) {
-      //       L += light.power / (distance*distance) * std::abs(n.dot(wi));
-      //     }
-      //   }
-      // }
+      Spectrum L;
       const Point x = interact.p;
       const Direction n = interact.n;
 
@@ -60,7 +47,6 @@ class Scene {
 
         SurfaceInteraction interact2;
         if (intersect(Ray(x + wi * eps, wi), interact2)) {
-          const Float d = (interact2.p - x).norm();
           if (interact2.t > d2l - eps) {
             L += light.power / (d2l*d2l) * std::abs(n.dot(wi));
           }
