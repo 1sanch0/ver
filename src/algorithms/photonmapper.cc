@@ -48,32 +48,31 @@ namespace photonmapper {
 
   Spectrum Li(const Ray &r, const Scene &scene, const PhotonMap &photonMap, ulong k, Float rk, size_t depth) {
     constexpr Float eps = 1e-4; // Self-shadow eps
-    if (depth == 0) return Direction();
 
     SurfaceInteraction interact;
 
+    if (depth == 0) return Spectrum();
+    if (!scene.intersect(r, interact)) return Spectrum();
+
     Spectrum L;
 
-    if (scene.intersect(r, interact)) {
-      const Direction wo = interact.wo;
-      const Point x = interact.p;
-      Direction wi;
+    const Direction wo = interact.wo;
+    const Point x = interact.p;
+    Direction wi;
 
-      bool absorption; // TODO: tiene sentido hacerlo en los dos sition
+    bool absorption; // TODO: tiene sentido hacerlo en los dos sition
 
-      uint e;
-      const auto brdf = interact.material->fr_sample(interact, wo, wi, absorption, e);
-      // if (absorption) return L;
+    uint e;
+    const auto brdf = interact.material->fr_sample(interact, wo, wi, absorption, e);
+    if (absorption) return L; // TODO: ver
       
-      if (e == 1 || e == 2) { // deltas
-        return Li(Ray(x + wi * eps, wi), scene, photonMap, k, rk, depth - 1);
-      } 
+    if (e == 1 || e == 2) // deltas
+      return Li(Ray(x + wi * eps, wi), scene, photonMap, k, rk, depth - 1);
 
-      auto nearest = photonMap.nearest_neighbors(x, k, rk);
-      for (const Photon *photon : nearest) {
-        const Float distance = (x - photon->pos).norm();
-        L += brdf * photon->flux * kernel::box(distance, rk); // divdo por pi en el kernel
-      }
+    auto nearest = photonMap.nearest_neighbors(x, k, rk);
+    for (const Photon *photon : nearest) {
+      const Float distance = (x - photon->pos).norm();
+      L += brdf * photon->flux * kernel::box(distance, rk);
     }
 
     return L;
@@ -93,8 +92,8 @@ namespace photonmapper {
 
     // Parameters:
     size_t S = 9999999;
-    // S = 1000000;
-    size_t spp = 10;
+    S = 1000000;
+    size_t spp = 12;
     unsigned long k = 100000;
     float rk = 0.07;
 

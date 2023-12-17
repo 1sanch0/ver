@@ -22,12 +22,12 @@ class Material {
     Material(const Direction &K_d, const Direction &K_s, const Direction &K_t, const Direction &K_e,
              Float eta_ = 1.0)
             : Kd{K_d}, Ks{K_s}, Kt{K_t}, Ke{K_e}, eta{eta_} {
-              auto s = Kd + Ks + Kt;
-              assert(s.max() <= 1, "Albedo sums >1")
-            }
+      auto s = Kd + Ks + Kt;
+      assert(s.max() <= 1, "Albedo sums >1")
+    }
     
+    // TODO: THIS IS THE MAIN ERROR FOR THE WRONG TOP
     Spectrum fr_diffuse(const SurfaceInteraction &si, const Direction &wo, Direction &wi) {
-      // const auto n = (wo.dot(si.n) < 0) ? -si.n : si.n;
       const auto n = si.n;
 
       Direction b2, b3;
@@ -36,9 +36,17 @@ class Material {
         b3 = n.cross(wo);
       } else
         makeCoordSystem(n, b2, b3);
-      
-
       const Mat4 transform(b3, b2, n);
+
+      // Direction x, y, z = n;
+      // if (si.sphere) {
+      //   y = wo;
+      //   x = z.cross(y);
+      // } else
+      //   makeCoordSystem(z, x, y); 
+
+      // const Mat4 transform(x, y, z);
+
       // #pragma omp critical
       // {
       //   std::cout << "---------" << std::endl;
@@ -98,20 +106,39 @@ class Material {
 
       const Float n1 = (enters) ? 1.0 : 1.5;
       const Float n2 = (enters) ? 1.5 : 1.0;
-      const Float e = (n1/n2);
+      const Float nn = (n1/n2);
 
-      const Float cosThetaI = i.dot(n);
+      const Float cosThetaI = wo.dot(n);
 
-      const Float sin2ThetaT = e*e * (1 - cosThetaI * cosThetaI);
+      const Float sin2ThetaT = nn * nn * (1 - cosThetaI * cosThetaI);
 
-      if (sin2ThetaT > 1) {
+      const bool TIR = sin2ThetaT > 1.0;
+
+      if (TIR) {
         wi = i - n * 2 * i.dot(n);
         return Kt;
       }
 
-      wi = i * e + n * (e * cosThetaI - std::sqrt(1 - sin2ThetaT));
+      const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
 
-      return Kt;
+      wi = i * nn + n * (nn * cosThetaI - cosThetaT);
+
+      const Float R0 = (n1 - n2) / (n1 + n2) * (n1 - n2) / (n1 + n2);
+
+      Float Rschlick;
+      if (n1 <= n2) {
+        const Float a = (1 - cosThetaI);
+        Rschlick = R0 + (1 - R0) * a * a * a * a * a;
+      } else if (n1 > n2 && !TIR) {
+        const Float a = (1 - cosThetaT);
+        Rschlick = R0 + (1 - R0) * a * a * a * a * a;
+      } else {
+        Rschlick = 1.0;
+      }
+
+      const Float T = 1.0 - Rschlick;
+
+      return Kt /** T*/;
 
       // const auto n = si.n;
       // const auto v = -wo;

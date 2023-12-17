@@ -55,14 +55,12 @@ void CornellBox(Scene &scene) {
   auto greenMaterial = std::make_shared<Material>(green, black, black, black);
 
   auto pinkMaterial = std::make_shared<Material>(pink, black, black, black);
-  // auto pinkMaterial = std::make_shared<Material>(black, Direction(1,1,1), black, black);
-  // auto pinkMaterial = std::make_shared<Material>(black, black, Direction(1,1,1), black);
-  // auto pinkMaterial = std::make_shared<Material>(black, Direction(.9,.9,.9), black, black);
-
-  // auto blueMaterial = std::make_shared<Material>(light_blue, black, black, black);
-  auto blueMaterial = std::make_shared<Material>(black, black, Direction(1,1,1), black);
 
   auto LBMaterial = std::make_shared<Material>(light_blue/2, Direction(1,1,1) - light_blue/2, black, black);
+  // auto LBMaterial = std::make_shared<Material>(black, Direction(1,1,1), black, black);
+  // auto LBMaterial = std::make_shared<Material>(pink, black, black, black);
+  auto RBMaterial = std::make_shared<Material>(black, black, Direction(1,1,1), black);
+  // auto RBMaterial = std::make_shared<Material>(light_blue, black, black, black);
 
   //===============================================================
   auto meshLeft = Plane(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1));
@@ -127,7 +125,7 @@ void CornellBox(Scene &scene) {
               LBMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
-              blueMaterial));
+              RBMaterial));
 
   
   // simply::PLYFile sus("../teapot.ply");
@@ -202,29 +200,8 @@ int main() {
   //raytracer::render(cam, mirrorScene, 6);
 
   pathtracer::render(cam, cornellBoxScene, 24);
-  // photonmapper::render(cam, cornellBoxScene, 100);
+  // photonmapper::render(cam, cornellBoxScene, 101);
 
-  //auto start = std::chrono::high_resolution_clock::now();
-//
-  //#pragma omp parallel for
-  //for (int i = 0; i < width; i++) {
-    //for (int j = 0; j < height; j++) {
-      //Ray r = cam.getRay(i, j);
-//
-      //Direction normal, color;
-      //Float depth;
-//
-      //scene.test(r, color, normal, depth);
-//
-      //cam.writeColor(i, j, color);
-      //cam.writeNormal(i, j, normal);
-      ////cam.writeDepth(i, j, depth);
-    //}
-  //}
-//
-  //auto stop = std::chrono::high_resolution_clock::now();
-  //auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-  //std::cout << "Render took: " << duration.count() << " milliseconds" << std::endl;
 
   tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
   // tonemap::Reinhard2002().applyTo(cam.film);

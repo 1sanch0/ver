@@ -9,7 +9,6 @@
 #include "lights.hh"
 
 namespace pathtracer {
-  Spectrum Li(const Ray &r, const Scene &scene, size_t depth);
   void render(Camera &camera, const Scene &scene, size_t maxDepth);
 } // namespace pathtracer
 

@@ -2,39 +2,32 @@
 #include <chrono>
 
 namespace pathtracer {
-  Direction /*Spectrum*/ Li(const Ray &r, const Scene &scene, size_t depth) {
+  Spectrum Li(const Ray &r, const Scene &scene, size_t depth) {
     constexpr Float eps = 1e-4; // Self-shadow eps
-    if (depth == 0) return Direction();
 
-    SurfaceInteraction interact, tmp;
+    SurfaceInteraction interact;
 
-    Direction /*Spectrum*/ L;
+    if (depth == 0) return Spectrum();
+    if (!scene.intersect(r, interact)) return Spectrum();
 
-    if (scene.intersect(r, interact)) {
-      const Direction wo = interact.wo;
-      Direction wi;
-      Direction Lp = scene.directLight(interact);
 
-      bool absorption;
-      // const Direction n = interact.n;
-      //  const auto n = (wo.dot(interact.n) < 0) ? -interact.n : interact.n;
-      const Point x = interact.p;
+    const Point x = interact.p;
+    const Direction wo = interact.wo;
+    Direction wi;
 
-      uint _;
-      const auto brdf = interact.material->fr_sample(interact, wo, wi, absorption, _);
-      Lp *= brdf;
+    bool absorption;
+    uint material_event;
 
-      L = interact.material->Le();
-      if (L.max() != 0)
-        return Lp + L;
+    const auto brdf = interact.material->fr_sample(interact, wo, wi, absorption, material_event);
+    if (absorption) return Spectrum();
 
-      if (absorption)
-        return Lp;
+    const Spectrum Le = interact.material->Le();
+    if (Le.max() != 0) return Le; // Material emits
 
-      L = Lp + brdf * Li(Ray(x + wi * eps, wi), scene, depth - 1);
-    }
+    // Puntual light
+    const Spectrum Lp = (material_event == 0) ? brdf * scene.directLight(interact) : Spectrum(); 
 
-    return L;
+    return Lp + brdf * Li(Ray(x + wi * eps, wi), scene, depth - 1);
   }
 
   void render(Camera &camera, const Scene &scene, size_t maxDepth) {
