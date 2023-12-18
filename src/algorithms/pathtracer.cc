@@ -61,7 +61,8 @@ namespace pathtracer {
         si.n.y = (si.n.y < 0) ? 0 : si.n.y;
         si.n.z = (si.n.z < 0) ? 0 : si.n.z;
         camera.writeNormal(i, j, si.n);
-        //cam.writeDepth(i, j, si.t);
+        // camera.writeNormal(i, j, Direction(si.t, si.t, si.t));
+        // cam.writeDepth(i, j, si.t);
 
         #pragma omp critical
         {

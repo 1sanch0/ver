@@ -25,8 +25,9 @@
 #include "algorithms/pathtracer.hh"
 #include "algorithms/photonmapper.hh"
 
-#define COLOR_SCHEMA 0
-#define BALLS 1
+#define VERSION 3
+#define USE_BVH 1
+// #define DEBUG_BVH 0 && USE_BVH
 
 void CornellBox(Scene &scene) {
   // scene.add(LightPoint(Point(0, -0.5, -1), Direction(1, 1, 1)));
@@ -47,39 +48,94 @@ void CornellBox(Scene &scene) {
 
   auto pinkMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
 
-  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
-  // auto LBMaterial = std::make_shared<Material>(black, Direction(1,1,1), black, black);
-  // auto LBMaterial = std::make_shared<Material>(pink, black, black, black);
-  
-  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-  // auto RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
-
-  #if COLOR_SCHEMA == 0
+  #if VERSION == 0
   scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
   auto topMaterial = whiteMaterial;
   auto botMaterial = whiteMaterial;
-  #elif COLOR_SCHEMA == 1
+
+  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  #elif VERSION == 1
   scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = whiteMaterial;
   auto rightMaterial = whiteMaterial;
   auto backMaterial = whiteMaterial;
   auto topMaterial = redMaterial;
   auto botMaterial = greenMaterial;
-  #elif COLOR_SCHEMA == 2
+
+  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
+              LBMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
+              RBMaterial));
+  #elif VERSION == 2
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
   auto topMaterial = whiteMaterialE;
   auto botMaterial = whiteMaterial;
 
-  LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
-  RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+  auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
+              LBMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
+              RBMaterial));
+  #elif VERSION == 3
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterial;
+  auto botMaterial = whiteMaterial;
+
+  simply::PLYFile sus("../../teapotN.ply");
+  auto meshSus = std::make_shared<TriangleMesh>(
+    Mat4::rotate(M_PI / -2.0, 1, 0, 0) * Mat4::translation(0, 0, -1) * Mat4::scale(.2, .2, .2),
+    sus);
+
+  for (size_t i = 0; i < meshSus->nTriangles; i++)
+    scene.add(
+      std::make_unique<GeometricPrimitive>(
+        std::make_shared<Triangle>(meshSus, i),
+        pinkMaterial));
+
+  #elif VERSION == 4 
+  // Focus
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterial;
+  auto botMaterial = whiteMaterial;
+
+  auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(black, white, black, black);
+  auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
+              LBMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
+              RBMaterial));
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
+              CBMaterial));
   #endif
 
-  //===============================================================
+  #if !DEBUG_BVH
   auto meshLeft = Quad(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshLeft, 0),
@@ -104,7 +160,6 @@ void CornellBox(Scene &scene) {
               std::make_shared<Triangle>(meshBack, 1),
               backMaterial));
 
-  // FIXME: TODO: FOR WHATEVER REASON TOP AND BOTTOM NORMALS DONT WORK WITH THEIR CORRECT VALUES BUT WITH THE OTHERS WHAT?
   auto meshTop = Quad(Point(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshTop, 0),
@@ -121,7 +176,18 @@ void CornellBox(Scene &scene) {
               std::make_shared<Triangle>(meshBot, 1),
               botMaterial));
 
-  //===============================================================
+  #endif 
+
+  #if USE_BVH
+  std::cout << "S': " << scene.scene.size() << std::endl;
+  std::vector<std::shared_ptr<Primitive>> p(scene.scene.size());
+  for (int i = 0; i < scene.scene.size(); i++)
+    p[i] = std::move(scene.scene[i]);
+  p.reserve(p.size());
+  scene.scene = std::vector<std::unique_ptr<Primitive>>();
+  scene.scene.push_back(std::make_unique<BVH>(std::move(p)));
+  #endif
+  std::cout << "S: " << scene.scene.size() << std::endl;
 
   // auto meshFront = Plane(Point(0, 0, -5), Direction(0, 1, 0), Direction(1, 0, 0));
   // scene.add(std::make_unique<GeometricPrimitive>(
@@ -130,15 +196,6 @@ void CornellBox(Scene &scene) {
   // scene.add(std::make_unique<GeometricPrimitive>(
   //             std::make_shared<Triangle>(meshFront, 1),
   //             whiteMaterial));
-
-  #if BALLS
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
-              LBMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
-              RBMaterial));
-  #endif
 
   
   // simply::PLYFile sus("../teapot.ply");
@@ -190,9 +247,6 @@ int main() {
   Scene cornellBoxScene;
   CornellBox(cornellBoxScene);
 
-  //Scene mirrorScene;
-  //MirrorScene(mirrorScene);
-
   int width = 1280/8;//720;
   int height = 1280/8;
 
@@ -212,7 +266,7 @@ int main() {
   //raytracer::render(cam, cornellBoxScene, 6);
   //raytracer::render(cam, mirrorScene, 6);
 
-  size_t spp = 128 * 2;
+  size_t spp = 128;
   size_t maxDepth = 1024;
   HemisphereSampler sampler = COSINE;
   pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);

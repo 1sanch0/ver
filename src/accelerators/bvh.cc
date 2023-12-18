@@ -129,13 +129,20 @@ bool BVH::intersect(const Ray &ray, SurfaceInteraction &interact) const {
 
   uint toVisitOffset = 0, currentNodeIndex = 0;
   uint nodesToVisit[64];
+
+  SurfaceInteraction tmpInteract;
+  tmpInteract.t = std::numeric_limits<Float>::max();
+  interact.t = std::numeric_limits<Float>::max();
   for(;;) {
     const LinearBVHNode &node = nodes[currentNodeIndex];
     if (node.bounds.intersect(ray, invDir, dirIsNeg)) {
       if (node.nPrims > 0) {
         for (uint i = 0; i < node.nPrims; i++)
-          if (primitives[node.offset + i]->intersect(ray, interact))
-            hit = true;
+          if (primitives[node.offset + i]->intersect(ray, tmpInteract))
+            if (tmpInteract.t < interact.t) {
+              hit = true;
+              interact = tmpInteract;
+            }
         if (toVisitOffset == 0)
           break;
         currentNodeIndex = nodesToVisit[--toVisitOffset];

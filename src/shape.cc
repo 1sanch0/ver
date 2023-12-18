@@ -9,8 +9,9 @@ bool Shape::intersect(const Ray &ray, bool testAlphaTexture) const {
 Sphere::Sphere(const Point &origin, Float radius) : o{origin}, r{radius} {}
 
 Bounds Sphere::bounds() const { 
-  Float x = r;
-  return Bounds(Point(-r, -r, -r), Point(r, r, r));
+  const Direction min(-r, -r, -r);
+  const Direction max(r, r, r);
+  return Bounds(o+min, o+max);
 }
 
 bool Sphere::intersect(const Ray &ray, Float &tHit,
@@ -109,6 +110,18 @@ TriangleMesh::TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply) {
     p.push_back(transform * pi);
   }
 
+  if (hasNormals) {
+    // TODO: assert size
+    for (size_t i = 0; i < XIdx.amount; i++) {
+      Direction ni;
+      // TODO: correct dtype
+      ni.x = ply.elements[NxIdx.element_idx].take<float>(NxIdx.start + NxIdx.offset * i );
+      ni.y = ply.elements[NyIdx.element_idx].take<float>(NyIdx.start + NyIdx.offset * i );
+      ni.z = ply.elements[NzIdx.element_idx].take<float>(NzIdx.start + NzIdx.offset * i );
+      n.push_back((transform * ni).normalize());
+    }
+  }
+
   for (size_t i = 0; i < indicesIdx.amount; i++) {
     // TODO: correct datatypes
     int len = ply.elements[indicesIdx.element_idx].take<uint8_t>(indicesIdx.start);
@@ -167,6 +180,11 @@ Bounds Triangle::bounds() const {
   const Point &p0 = mesh->p[v[0]];
   const Point &p1 = mesh->p[v[1]];
   const Point &p2 = mesh->p[v[2]];
+  // std::cout << "p0: " << p0 << std::endl;
+  // std::cout << "p1: " << p1 << std::endl;
+  // std::cout << "p2: " << p2 << std::endl;
+  // std::cout << Bounds(p0).Union(p1).Union(p2) << std::endl;
+  // std::cout << Bounds(p0).Union(p1).Union(p2).volume() << std::endl << std::endl;
   return Bounds(p0).Union(p1).Union(p2);
 }
 
