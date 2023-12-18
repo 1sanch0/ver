@@ -212,7 +212,10 @@ int main() {
   //raytracer::render(cam, cornellBoxScene, 6);
   //raytracer::render(cam, mirrorScene, 6);
 
-  pathtracer::render(cam, cornellBoxScene, 24);
+  size_t spp = 128 * 2;
+  size_t maxDepth = 1024;
+  HemisphereSampler sampler = COSINE;
+  pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);
   // photonmapper::render(cam, cornellBoxScene, 101);
 
 

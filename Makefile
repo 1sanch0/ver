@@ -4,8 +4,9 @@ CC = g++
 EMCC = em++
 
 SRC_DIR = ./src
+INCLUDE_DIR = ./include
 
-CFLAGS = -std=c++17 -I$(SRC_DIR)
+CFLAGS = -std=c++17 -I$(SRC_DIR) -isystem $(INCLUDE_DIR)
 LFLAGS = -lm
 
 ifeq ($(DEBUG), 1)

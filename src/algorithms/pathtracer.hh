@@ -9,7 +9,7 @@
 #include "lights.hh"
 
 namespace pathtracer {
-  void render(Camera &camera, const Scene &scene, size_t maxDepth);
+  void render(Camera &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler = COSINE);
 } // namespace pathtracer
 
 #endif // PATHTRACER_H_
