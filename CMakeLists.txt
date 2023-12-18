@@ -7,9 +7,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp") # Multi-threaded
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Wcast-qual -Wshadow -Wpointer-arith") # Warnings
 
-include_directories(
-  src/
-)
+include_directories(SYSTEM include/ )
+include_directories(src/)
 
 file(GLOB SOURCES src/*.cc src/*.hh src/*.h src/**/*.cc src/**/*.hh src/**/*.h)
 message(STATUS "Source files: ${SOURCES}")

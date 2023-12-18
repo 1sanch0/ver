@@ -3,7 +3,7 @@
 
 #include "ver.hh"
 #include "geometry.hh"
-#include "accelerators/kdtree.h"
+#include "kdtree.h"
 
 #include "camera.hh"
 #include "scene.hh"
