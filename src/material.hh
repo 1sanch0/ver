@@ -6,17 +6,93 @@
 #include "spectrum.hh"
 #include "interaction.hh"
 
-// class Sampler {
-//   public:
-//     virtual 
-// }
+enum HemisphereSampler {
+  SOLID_ANGLE, COSINE
+};
 
-// class BSDF {
-//   public:
-//     virtual Spectrum f(const SurfaceInteraction &si, const Direction &wo, const Direction &wi) const = 0;
-//     virtual Spectrum sample_f(const SurfaceInteraction &si, const Direction &wo, Direction &wi, ) const = 0;
-// };
+class BSDF {
+  public:
+    virtual Spectrum fr(const SurfaceInteraction &si, const Direction &wi) const = 0;
+    virtual Spectrum sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const = 0;
+    virtual Float p(HemisphereSampler sampler, const Direction &wi) const = 0;
+    virtual Float cosThetaI(HemisphereSampler sampler, const Direction &wi, const Direction &n) const = 0;
+};
 
+class IMaterial {
+  public:
+    virtual std::shared_ptr<BSDF> sampleFr() const = 0;
+
+    virtual Spectrum Le() const = 0;
+};
+
+namespace Slides { // BSDFs & Materials as seen in class (Fall 2023) (Unizar, Graphic IT)
+  class DiffuseBRDF : public BSDF {
+    public:
+      DiffuseBRDF(const ::Spectrum &coefficient, Float prob = 1.0);
+
+      ::Spectrum fr(const SurfaceInteraction &si, const Direction &wi) const override;
+      ::Spectrum sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const override;
+      Float p(HemisphereSampler sampler, const Direction &wi) const override;
+      Float cosThetaI(HemisphereSampler sampler, const Direction &wi, const Direction &n) const override;
+
+    private:
+      ::Spectrum k;
+      Float invProb;
+  };
+
+  class PerfectSpecularBRDF : public BSDF {
+    public:
+      PerfectSpecularBRDF(const ::Spectrum &coefficient, Float prob = 1.0);
+
+      ::Spectrum fr(const SurfaceInteraction &si, const Direction &wi) const override;
+      ::Spectrum sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const override;
+      Float p(HemisphereSampler sampler, const Direction &wi) const override;
+      Float cosThetaI(HemisphereSampler sampler, const Direction &wi, const Direction &n) const override;
+
+    private:
+      ::Spectrum k;
+      Float invProb;
+  };
+
+  class RefractionBRDF : public BSDF {
+    public:
+      RefractionBRDF(const ::Spectrum &coefficient, Float prob = 1.0);
+
+      ::Spectrum fr(const SurfaceInteraction &si, const Direction &wi) const override;
+      ::Spectrum sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const override;
+      Float p(HemisphereSampler sampler, const Direction &wi) const override;
+      Float cosThetaI(HemisphereSampler sampler, const Direction &wi, const Direction &n) const override;
+
+    private:
+      ::Spectrum k;
+      Float invProb;
+  };
+
+  class Material : public IMaterial {
+    public:
+      Material(const ::Spectrum &kd, const ::Spectrum &ks, const ::Spectrum &kt, const ::Spectrum &ke,
+              Float eta_ = 1.0);
+
+      std::shared_ptr<BSDF> sampleFr() const override;
+
+      Spectrum Le() const override;
+
+    private:
+      std::shared_ptr<BSDF> diffuse;
+      std::shared_ptr<BSDF> specular;
+      std::shared_ptr<BSDF> refraction;
+
+      ::Spectrum emission;
+
+      Float eta;
+
+      Float prob_d;
+      Float prob_s;
+      Float prob_t;
+  };
+}
+
+#if 0
 class Material {
   public:
     Material(const Direction &K_d, const Direction &K_s, const Direction &K_t, const Direction &K_e,
@@ -30,34 +106,21 @@ class Material {
     Spectrum fr_diffuse(const SurfaceInteraction &si, const Direction &wo, Direction &wi) {
       const auto n = si.n;
 
-      Direction b2, b3;
-      if (si.sphere) {
-        b2 = wo;
-        b3 = n.cross(wo);
-      } else
-        makeCoordSystem(n, b2, b3);
-      const Mat4 transform(b3, b2, n);
-
-      // Direction x, y, z = n;
+      // Direction b2, b3;
       // if (si.sphere) {
-      //   y = wo;
-      //   x = z.cross(y);
+      //   b3 = n.cross(wo);
+      //   b2 = b3.cross(n);
       // } else
-      //   makeCoordSystem(z, x, y); 
+      //   makeCoordSystem(n, b2, b3);
+      // const Mat4 transform(b3, b2, n);
 
-      // const Mat4 transform(x, y, z);
+      Direction x, y, z = n;
+        makeCoordSystem(z, x, y); 
 
-      // #pragma omp critical
-      // {
-      //   std::cout << "---------" << std::endl;
-      //   std::cout << wo.dot(n) << std::endl;
-      //   std::cout << "n: " << n << std::endl;
-      //   std::cout << "si.n: " << si.n << std::endl;
-      //   std::cout << "T: " << std::endl;
-      //   std::cout << transform << std::endl;
-      // }
+      const Mat4 transform(x, y, z);
 
-      const Float theta = std::acos(std::sqrt(1 - uniform(0, 1))); // TODO: bien? sqrt(1-unifrom)
+      #if 1
+      const Float theta = std::acos(std::sqrt(1.0 - uniform(0, 1))); // TODO: bien? sqrt(1-unifrom)
       const Float phi = 2.0 * M_PI * uniform(0, 1);
 
       // TODO REVISAR LUZ DE AREA MUAL
@@ -65,27 +128,16 @@ class Material {
       wi = transform * Direction(std::sin(theta) * std::cos(phi),
                                  std::sin(theta) * std::sin(phi),
                                  std::cos(theta));
-      
-      // #pragma omp critical
-      // {
-      //   std::cout << "theta: " << theta << " phi: " << phi << std::endl;
-      //   std::cout << "wi': " << wi << std::endl;
-      //   std::cout << "wi: ";
-      //   std::cout << Direction(std::sin(theta) * std::cos(phi),
-      //                          std::sin(theta) * std::sin(phi),
-      //                          std::cos(theta)) << std::endl;
-      //   std::cout << "+++++++++" << std::endl;
-      // }
-      
-      // auto x = n;
-      
-      // if (x.x < 0)
-      //   x.x = std::abs(x.x);
-      // if (x.y < 0)
-      //   x.y = std::abs(x.y);
-      // if (x.z < 0)
-      //   x.z = std::abs(x.z);
-      // return x;
+      #else
+      // Wrong but works
+      const Float theta = std::acos(2 * uniform(0, 1) - 1);
+      const Float phi = 2 * M_PI * uniform(0, 1);
+
+      wi = Direction(std::sin(theta) * std::cos(phi),
+                     std::sin(theta) * std::sin(phi),
+                     std::cos(theta));
+      #endif
+
       return Kd; //* M_1_PI;
     }
 
@@ -102,28 +154,30 @@ class Material {
       // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
       const auto n = si.n;
       const auto v = -wo;
-      const bool enters = wo.dot(n) < 0;
+      const bool enters = wo.dot(n) > 0; // Move to surface interaciton 
 
       const Float n1 = (enters) ? 1.0 : 1.5;
       const Float n2 = (enters) ? 1.5 : 1.0;
       const Float nn = (n1/n2);
 
-      const Float cosThetaI = n.dot(v);
+      wi = v - n * 2 * v.dot(n);
 
-      const Float sin2ThetaT = nn * nn * (1.0 - cosThetaI * cosThetaI);
+      // const Float cosThetaI = n.dot(v);
 
-      Float r0 = (1-nn) / (1+nn);
-      r0 = r0*r0;
-      const Float R= r0 + (1-r0)*pow((1 - cosThetaI),5);
+      // const Float sin2ThetaT = nn * nn * (1.0 - cosThetaI * cosThetaI);
 
-      if (sin2ThetaT > 1.0 || R > uniform(0, 1)) { // TIR
-        wi = v + n * 2 * cosThetaI;
-        return Kt;
-      }
+      // Float r0 = (1-nn) / (1+nn);
+      // r0 = r0*r0;
+      // const Float R= r0 + (1-r0)*pow((1 - cosThetaI),5);
 
-      const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
+      // if (sin2ThetaT > 1.0 || R > uniform(0, 1)) { // TIR
+      //   wi = v + n * 2 * cosThetaI;
+      //   return Kt;
+      // }
 
-      wi = v * nn + n * (nn * cosThetaI - cosThetaT);
+      // const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
+
+      // wi = v * nn + n * (nn * cosThetaI - cosThetaT);
       return Kt;
 
       // const Float n1 = (enters) ? 1.0 : 1.5;
@@ -171,10 +225,10 @@ class Material {
       if (sample < pd) {
         e = 0;
         return fr_diffuse(si, wo, wi) * (1.0 / pd);
-      } else if (sample < ps) {
+      } else if (sample < pd + ps) {
         e = 1;
         return fr_specular(si, wo, wi) * (1.0 / ps);
-      } else if (sample < pt) {
+      } else if (sample < pd + ps + pt) {
         e = 2;
         return fr_refraction(si, wo, wi) * (1.0 / pt);
       }
@@ -188,65 +242,10 @@ class Material {
       return Ke; // TODO: review
     }
 
-  private:
+  public:
     Direction Kd, Ks, Kt, Ke;
     Float eta;
 };
-
-// enum BRDFType {
-// BRDF_DIFFUSE,
-// BRDF_SPECULAR,
-// BRDF_REFRACTION,
-// };
-
-// class BRDF {
-//   public:
-//     explicit BRDF(BRDFType brdf_type) : type{brdf_type} {}
-//     virtual Direction f(const Direction &wo, const Direction &wi) const = 0;
-//     virtual Direction sample_f(const Direction &wo, Direction &wi) const = 0;
-//   public:
-//     BRDFType type;
-// };
-
-// class DiffuseBRDF : public BRDF {
-//   public:
-//     explicit DiffuseBRDF(Float Kd) : BRDF(BRDF_DIFFUSE), kd{Kd} {}
-
-//     Direction f(const Direction &wo, const Direction &wi) const override {
-//       (void)wo; (void)wi;
-//       Float fr = kd / M_PI;
-//       return Direction(fr, fr, fr);
-//     }
-//     Direction sample_f(const Direction &wo, Direction &wi) const override { return f(wo, wi); }
-
-//   private:
-//     Float kd;
-// };
-
-// class SpecularBRDF : public BRDF {
-//   public:
-//     SpecularBRDF(BRDFType brdf_type = BRDF_SPECULAR) : BRDF(brdf_type) {}
-
-//     Direction f(const Direction &wo, const Direction &wi) const override {
-//       (void)wo; (void)wi;
-//       return Direction(0,0,0);
-//     }
-
-//     Direction sample_f(const Direction &wo, Direction &wi) const override {
-//       return f(wo, wi);
-//     }
-// };
-
-// struct Material { // TODO
-//   Direction color;
-//   std::shared_ptr<BRDF> brdf;
-
-//   // TODO: test
-//   Float ni = 1;
-
-//   Direction Le;
-
-//   Material(const Direction &c, std::shared_ptr<BRDF> mBRDF, const Direction &light = Direction(0, 0, 0)) : color{c}, brdf{mBRDF}, Le{light} {}
-// };
+#endif
 
 #endif // MATERIAL_H_

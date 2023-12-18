@@ -18,7 +18,9 @@ class Interaction {
     Direction n;
 };
 
-class Material;
+namespace Slides {
+  class Material;
+}
 struct SurfaceInteraction { // TODO: Temporal
   Point p;
   Direction n;
@@ -28,7 +30,7 @@ struct SurfaceInteraction { // TODO: Temporal
   /* TEST */
   Direction wo;
   Float t;
-  std::shared_ptr<Material> material;
+  std::shared_ptr<Slides::Material> material;
 };
 
 #endif // INTERACTION_H_

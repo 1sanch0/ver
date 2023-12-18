@@ -5,12 +5,32 @@ namespace pathtracer {
   Spectrum Li(const Ray &r, const Scene &scene, size_t depth) {
     constexpr Float eps = 1e-4; // Self-shadow eps
 
+    HemisphereSampler sampler = COSINE;
+
     SurfaceInteraction interact;
 
     if (depth == 0) return Spectrum();
     if (!scene.intersect(r, interact)) return Spectrum();
 
+    const Point x = interact.p;
+    const Direction n = interact.n;
 
+    const auto brdf = interact.material->sampleFr();
+    if (brdf == nullptr) return Spectrum(); // Absorption
+
+    const Spectrum Le = interact.material->Le();
+    if (Le.max() != 0) return Le; // Material emits
+
+    Direction wi;
+    const Spectrum L = brdf->sampleFr(sampler, interact, wi);
+    const Float cosThetaI = brdf->cosThetaI(sampler, wi, n);
+    const Float p = brdf->p(sampler, wi);
+
+    const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi) * M_PI; // * std::abs(wi.dot(n)); // TODO: ASK
+
+    return Lp + L * Li(Ray(x + wi * eps, wi), scene, depth - 1) * cosThetaI / p;
+
+    #if 0
     const Point x = interact.p;
     const Direction wo = interact.wo;
     Direction wi;
@@ -26,8 +46,10 @@ namespace pathtracer {
 
     // Puntual light
     const Spectrum Lp = (material_event == 0) ? brdf * scene.directLight(interact) : Spectrum(); 
+    // This lo;; be miltiplay be bdrdf cosite tems (both)
 
     return Lp + brdf * Li(Ray(x + wi * eps, wi), scene, depth - 1);
+    #endif
   }
 
   void render(Camera &camera, const Scene &scene, size_t maxDepth) {
@@ -64,8 +86,10 @@ namespace pathtracer {
         }
         L /= spp;
 
-
         camera.writeColor(i, j, L);
+        si.n.x = (si.n.x < 0) ? 0 : si.n.x;
+        si.n.y = (si.n.y < 0) ? 0 : si.n.y;
+        si.n.z = (si.n.z < 0) ? 0 : si.n.z;
         camera.writeNormal(i, j, si.n);
         //cam.writeDepth(i, j, si.t);
 

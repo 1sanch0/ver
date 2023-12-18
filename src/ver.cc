@@ -25,19 +25,11 @@
 #include "algorithms/pathtracer.hh"
 #include "algorithms/photonmapper.hh"
 
+#define COLOR_SCHEMA 0
+#define BALLS 1
 
 void CornellBox(Scene &scene) {
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   // scene.add(LightPoint(Point(0, -0.5, -1), Direction(1, 1, 1)));
-
-  //auto diffuse1 = std::make_shared<DiffuseBRDF>(1);
-  //auto specular = std::make_shared<SpecularBRDF>();
-  //auto refract = std::make_shared<SpecularBRDF>(BRDF_REFRACTION);
-
-  //auto whiteMaterial = std::make_shared<Material>(Direction(1, 1, 1), diffuse1);
-  //auto whiteMaterialE = std::make_shared<Material>(Direction(1, 1, 1), diffuse1, Direction(0, 1, 0));
-  //auto whiteMaterialReflect = std::make_shared<Material>(Direction(1, 1, 1), specular);
-  //auto redMaterial = std::make_shared<Material>(Direction(1, 0, 0), diffuse1);
 
   auto white = Direction(.9, .9, .9);
   auto whiteL= Direction(1, 1, 1);
@@ -47,67 +39,87 @@ void CornellBox(Scene &scene) {
   auto pink = Direction(0.8941, 0.66667, 0.9);
   auto light_blue = Direction(0.5529, 1, 1);
 
-  auto whiteMaterial = std::make_shared<Material>(white, black, black, black);
-  auto whiteMaterialE = std::make_shared<Material>(white, black, black, whiteL);
-  auto whiteMaterialReflect = std::make_shared<Material>(black, white, black, black);
-  auto redMaterial = std::make_shared<Material>(red, black, black, black);
-  auto greenMaterial = std::make_shared<Material>(green, black, black, black);
+  auto whiteMaterial = std::make_shared<Slides::Material>(white, black, black, black);
+  auto whiteMaterialE = std::make_shared<Slides::Material>(white, black, black, whiteL);
+  auto whiteMaterialReflect = std::make_shared<Slides::Material>(black, white, black, black);
+  auto redMaterial = std::make_shared<Slides::Material>(red, black, black, black);
+  auto greenMaterial = std::make_shared<Slides::Material>(green, black, black, black);
 
-  auto pinkMaterial = std::make_shared<Material>(pink, black, black, black);
+  auto pinkMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
 
-  auto LBMaterial = std::make_shared<Material>(light_blue/2, Direction(1,1,1) - light_blue/2, black, black);
+  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
   // auto LBMaterial = std::make_shared<Material>(black, Direction(1,1,1), black, black);
   // auto LBMaterial = std::make_shared<Material>(pink, black, black, black);
-  auto RBMaterial = std::make_shared<Material>(black, black, Direction(1,1,1), black);
-  // auto RBMaterial = std::make_shared<Material>(light_blue, black, black, black);
+  
+  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  // auto RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+
+  #if COLOR_SCHEMA == 0
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterial;
+  auto botMaterial = whiteMaterial;
+  #elif COLOR_SCHEMA == 1
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  auto leftMaterial = whiteMaterial;
+  auto rightMaterial = whiteMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = redMaterial;
+  auto botMaterial = greenMaterial;
+  #elif COLOR_SCHEMA == 2
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterialE;
+  auto botMaterial = whiteMaterial;
+
+  LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+  RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+  #endif
 
   //===============================================================
-  auto meshLeft = Plane(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1));
+  auto meshLeft = Quad(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshLeft, 0),
-              redMaterial));
+              leftMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshLeft, 1),
-              redMaterial));
+              leftMaterial));
 
-  auto meshRight = Plane(Point(1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1));
+  auto meshRight = Quad(Point(1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), (Direction(-1, 0, 0)));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshRight, 0),
-              greenMaterial));
+              rightMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshRight, 1),
-              greenMaterial));
+              rightMaterial));
 
-  auto meshBack = Plane(Point(0, 0, 1), Direction(0, 1, 0), Direction(1, 0, 0));
+  auto meshBack = Quad(Point(0, 0, 1), Direction(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, -1));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshBack, 0),
-              whiteMaterial/*Reflect*/));
+              backMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshBack, 1),
-              whiteMaterial/*Reflect*/));
+              backMaterial));
 
-  auto meshTop = Plane(Point(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, 1));
+  // FIXME: TODO: FOR WHATEVER REASON TOP AND BOTTOM NORMALS DONT WORK WITH THEIR CORRECT VALUES BUT WITH THE OTHERS WHAT?
+  auto meshTop = Quad(Point(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshTop, 0),
-              whiteMaterial));
+              topMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshTop, 1),
-              whiteMaterial));
+              topMaterial));
 
-  // scene.add(std::make_unique<GeometricPrimitive>(
-  //             std::make_shared<Triangle>(meshTop, 0),
-  //             whiteMaterialE));
-  // scene.add(std::make_unique<GeometricPrimitive>(
-  //             std::make_shared<Triangle>(meshTop, 1),
-  //             whiteMaterialE));
-
-  auto meshBot = Plane(Point(0, -1, 0), Direction(1, 0, 0), Direction(0, 0, 1));
+  auto meshBot = Quad(Point(0, -1, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshBot, 0),
-              whiteMaterial));
+              botMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshBot, 1),
-              whiteMaterial));
+              botMaterial));
 
   //===============================================================
 
@@ -119,12 +131,14 @@ void CornellBox(Scene &scene) {
   //             std::make_shared<Triangle>(meshFront, 1),
   //             whiteMaterial));
 
+  #if BALLS
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
               LBMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
               RBMaterial));
+  #endif
 
   
   // simply::PLYFile sus("../teapot.ply");

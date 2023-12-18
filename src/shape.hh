@@ -71,7 +71,7 @@ class Triangle : public Shape {
 
 };
 
-std::shared_ptr<TriangleMesh> Plane(const Point &origin, const Direction &u, const Direction &v);
+std::shared_ptr<TriangleMesh> Quad(const Point &origin, const Direction &u, const Direction &v, const Direction &n);
 
 // TODO: disk, curve
 

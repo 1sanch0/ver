@@ -317,11 +317,9 @@ bool Triangle::intersect(const Ray &ray, Float &tHit,
   tHit = t;
   interact.p = pHit;
   interact.t = t;
-  interact.n = dp02.cross(dp12).normalize();
+  // interact.n = dp02.cross(dp12).normalize();
+  interact.n = mesh->n[v[0]]; // TODO: will cause errors iun the future, interpolation good idea nice
   interact.wo = -ray.d;
-
-
-
 
 
 
@@ -387,9 +385,7 @@ void Triangle::getUVs(Vec2 uv[2]) const {
   }
 }
 
-std::shared_ptr<TriangleMesh> Plane(const Point &origin, const Direction &u, const Direction &v) {
-  Direction n = u.cross(v);
-
+std::shared_ptr<TriangleMesh> Quad(const Point &origin, const Direction &u, const Direction &v, const Direction &n) {
   std::vector<Point> p = {origin + u + v, // Top right
                           origin - u + v, // Bottom right
                           origin - u - v, // Bottom left

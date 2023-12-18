@@ -229,7 +229,8 @@ class Mat4 {
     }
 
     constexpr Mat4(const Direction &b1, const Direction &b2, const Direction &b3)
-      : data{b1.x, b1.y, b1.z, 0, b2.x, b2.y, b2.z, 0, b3.x, b3.y, b3.z, 0, 0, 0, 0, 1} {}
+      // : data{b1.x, b1.y, b1.z, 0, b2.x, b2.y, b2.z, 0, b3.x, b3.y, b3.z, 0, 0, 0, 0, 1} {}
+      : data{b1.x, b2.x, b3.x, 0, b1.y, b2.y, b3.y, 0, b1.z, b2.z, b3.z, 0, 0, 0, 0, 1} {}
 
     [[nodiscard]] constexpr static Mat4 identity() { return Mat4(1); }
     [[nodiscard]] constexpr static Mat4 translation(Float dx, Float dy, Float dz) {

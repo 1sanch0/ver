@@ -29,7 +29,7 @@ namespace photonmapper {
       Direction wi;
       uint e;
       bool absorption;
-
+      #if 0
       const auto brdf = interact.material->fr_sample(interact, wo, wi, absorption, e);
       
       if (absorption)
@@ -41,6 +41,7 @@ namespace photonmapper {
         photons.push_back(Photon(x, wo, flux, brdf));
 
       photons.splice(photons.end(), randomWalk(ray, scene, flux * brdf, N - 1));
+      #endif
     }
 
     return photons;
@@ -56,6 +57,7 @@ namespace photonmapper {
 
     Spectrum L;
 
+    #if 0
     const Direction wo = interact.wo;
     const Point x = interact.p;
     Direction wi;
@@ -74,7 +76,7 @@ namespace photonmapper {
       const Float distance = (x - photon->pos).norm();
       L += brdf * photon->flux * kernel::box(distance, rk);
     }
-
+    #endif
     return L;
   }
 
@@ -99,7 +101,7 @@ namespace photonmapper {
 
     for (const auto &light : scene.lights) { // puntuales, TODO para luces de area (triangulos)
       #pragma omp parallel for
-      for (int s = 0; s < S; s++) {
+      for (size_t s = 0; s < S; s++) {
         // TODO: P mal
         const Float theta = std::acos(2 * uniform(0, 1) - 1);
         const Float phi = 2 * M_PI * uniform(0, 1);
