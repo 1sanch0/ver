@@ -73,6 +73,9 @@
     "ios": "cpp",
     "locale": "cpp",
     "queue": "cpp",
-    "list": "cpp"
+    "list": "cpp",
+    "map": "cpp",
+    "set": "cpp",
+    "__tree": "cpp"
   }
 }

@@ -25,7 +25,16 @@
 #include "algorithms/pathtracer.hh"
 #include "algorithms/photonmapper.hh"
 
-#define VERSION 3
+#include "utils/argparse.hh"
+
+#define WALLS_H 0
+#define WALLS_V_BALLS 1
+#define DEFAULT_PT 2
+#define TEAPOT 3
+#define DEFAULT_FINAL 4
+
+
+#define VERSION TEAPOT
 #define USE_BVH 1
 // #define DEBUG_BVH 0 && USE_BVH
 
@@ -99,16 +108,19 @@ void CornellBox(Scene &scene) {
   auto topMaterial = whiteMaterial;
   auto botMaterial = whiteMaterial;
 
+  auto teapotMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+
   simply::PLYFile sus("../../teapotN.ply");
   auto meshSus = std::make_shared<TriangleMesh>(
     Mat4::rotate(M_PI / -2.0, 1, 0, 0) * Mat4::translation(0, 0, -1) * Mat4::scale(.2, .2, .2),
     sus);
 
+
   for (size_t i = 0; i < meshSus->nTriangles; i++)
     scene.add(
       std::make_unique<GeometricPrimitive>(
         std::make_shared<Triangle>(meshSus, i),
-        pinkMaterial));
+        teapotMaterial));
 
   #elif VERSION == 4 
   // Focus
@@ -119,9 +131,12 @@ void CornellBox(Scene &scene) {
   auto topMaterial = whiteMaterial;
   auto botMaterial = whiteMaterial;
 
-  auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(black, white, black, black);
-  auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+
+  // auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+  // auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+  // auto RBMaterial = std::make_shared<Slides::Material>(black, black, white, black);
 
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
@@ -130,9 +145,9 @@ void CornellBox(Scene &scene) {
               std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
               RBMaterial));
 
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
-              CBMaterial));
+  // scene.add(std::make_unique<GeometricPrimitive>(
+  //             std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
+  //             CBMaterial));
   #endif
 
   #if !DEBUG_BVH
@@ -242,7 +257,78 @@ void CornellBox(Scene &scene) {
   // std::cout << "Scene with " << scene.scene.size() << " polygons!" << std::endl;
 }
 
-int main() {
+int main(int argc, char **argv) {
+  utils::ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch");
+
+  parser.addArgument("integrator", "Integrator to use")
+    .choices({"pathtracer", "photonmapper"})
+    .default_value("pathtracer");
+
+  parser.addArgument("--width", "Image width")
+    .default_value("1280");
+  
+  parser.addArgument("--height", "Image height")
+    .default_value("720");
+
+  parser.addArgument("--spp", "Samples per pixel")
+    .default_value("256");
+  
+  parser.addArgument("-d", "Max recursion depth")
+    .default_value("24");
+  
+  parser.addArgument("-t", "Tonemap to use")
+    .choices({"gamma", "reinhard2002", "reinhard2005"})
+    .default_value("gamma");
+  
+  /*
+  TODO: tonemap parameters
+  
+  parser.addArgument("-g", "Gamma value")
+    .default_value("2.2");
+  */
+  
+  parser.addArgument("-c", "Camera to use")
+    .choices({"pinhole", "orthographic"})
+    .default_value("pinhole");
+
+  parser.addArgument("-p", "Hemisphere sampling method")
+    .choices({"uniform", "cosine"})
+    .default_value("cosine");
+  
+  parser.addArgument("-f", "Filename to save the image")
+    .default_value("test.ppm");
+  
+  parser.addArgument("--hdr", "Save as HDR")
+    .default_value("false")
+    .flag();
+  
+  parser.addArgument("--bvh", "Use BVH")
+    .default_value("false")
+    .flag();
+  
+  parser.addArgument("--merge", "Merge HDR files into a single one and exit")
+    .nargs('*');
+
+
+  auto args = parser.parse(argc, argv);
+
+  const auto &merge_files = args["--merge"];
+
+  if (merge_files.size() > 0) {
+    // Merge HDR files to a single one and exit
+
+    // TODO: should be fun tho :)
+
+    exit(0);
+  }
+
+  // TODO: perezaaaaa
+
+
+
+  exit(0);
+
+  
   #if 1
   Scene cornellBoxScene;
   CornellBox(cornellBoxScene);
@@ -266,8 +352,8 @@ int main() {
   //raytracer::render(cam, cornellBoxScene, 6);
   //raytracer::render(cam, mirrorScene, 6);
 
-  size_t spp = 128;
-  size_t maxDepth = 1024;
+  size_t spp = 256;
+  size_t maxDepth = 24;
   HemisphereSampler sampler = COSINE;
   pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);
   // photonmapper::render(cam, cornellBoxScene, 101);

@@ -73,29 +73,25 @@ namespace Slides {
 
   ::Spectrum RefractionBRDF::sampleFr(HemisphereSampler /*sampler*/, const SurfaceInteraction &si, Direction &wi) const {
     // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-    // TODO pls forsen help me
+
     const auto n = si.n;
     const auto v = -si.wo;
-    const bool enters = v.dot(n) < 0; // Move to surface interaciton 
-
-    // wi = v - n * 2 * v.dot(n);
+    const bool enters = v.dot(n) < 0;
 
     const Float n1 = (enters) ? 1.0 : 1.5;
     const Float n2 = (enters) ? 1.5 : 1.0;
-    const Float nn = (n1/n2);
+    const Float nn = n1 / n2;
 
-    const Float cosThetaI = n.dot(v);
+    const Float cosI = v.dot(n);
+    const Float sinT2 = nn * nn * (1.0 - cosI * cosI);
 
-    const Float sin2ThetaT = nn * nn * (1.0 - cosThetaI * cosThetaI);
-
-    if (sin2ThetaT > 1.0) { // TIR
+    if (sinT2 > 1.0) { // Total internal reflection
       wi = v - n * 2 * v.dot(n);
-      return k * invProb; // / wi.dot(n) ; gets cancelled out           <--
+      return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
     }
 
-    const Float cosThetaT = std::sqrt(1.0 - sin2ThetaT);
-
-    wi = v * nn + n * (nn * cosThetaI - cosThetaT);
+    const Float cosT = std::sqrt(1.0 - sinT2);
+    wi = v * nn + n * (nn * cosI - cosT);
 
     return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
   }
