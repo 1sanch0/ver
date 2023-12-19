@@ -21,9 +21,9 @@
 #include "accelerators/bvh.hh"
 #include "scene.hh"
 
-// #include "algorithms/raytracer.hh"
-#include "algorithms/pathtracer.hh"
-#include "algorithms/photonmapper.hh"
+// #include "integrators/raytracer.hh"
+#include "integrators/pathtracer.hh"
+#include "integrators/photonmapper.hh"
 
 #include "utils/argparse.hh"
 
@@ -385,6 +385,8 @@ int main(int argc, char **argv) {
       tonemap::Reinhard2005().applyTo(cam.film);
     else
       assert(false, "Unknown tonemap");
+
+    image::write(filename, cam.film);
   }
 
   if (saveNormals) {
@@ -393,57 +395,25 @@ int main(int argc, char **argv) {
   }
 
   if (saveDepth) {
-    // tonemap::Reinhard2002().applyTo(cam.nFilm);
-    // image::write("normals_" + filename, cam.nFilm);
+    tonemap::Reinhard2002().applyTo(cam.dFilm);
+    image::write("depth_" + filename, cam.dFilm);
   }
 
-  tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
-  // tonemap::Reinhard2002().applyTo(cam.film);
-  std::cout << "Max: " << cam.film.max() << std::endl;
-  // assert(cam.film.max() == 1, "fiml max !=1");
-  image::write("test.ppm", cam.film);
+  // tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
+  // // tonemap::Reinhard2002().applyTo(cam.film);
+  // std::cout << "Max: " << cam.film.max() << std::endl;
+  // // assert(cam.film.max() == 1, "fiml max !=1");
+  // image::write("test.ppm", cam.film);
 
-  std::cout << "Max: " << cam.nFilm.max() << std::endl;
-  tonemap::Reinhard2002().applyTo(cam.nFilm);
-  // std::cout << "Max: " << filmNormal.max() << std::endl;
-  assert(cam.nFilm.max() == 1, "film max !=1");
-  image::write("testN.ppm", cam.nFilm);
+  // std::cout << "Max: " << cam.nFilm.max() << std::endl;
+  // tonemap::Reinhard2002().applyTo(cam.nFilm);
+  // // std::cout << "Max: " << filmNormal.max() << std::endl;
+  // assert(cam.nFilm.max() == 1, "film max !=1");
+  // image::write("testN.ppm", cam.nFilm);
 
-  //tonemap::Reinhard2002().applyTo(cam.dFilm);
-  //assert(cam.dFilm.max() == 1, "film max !=1");
-  //image::write("testD.ppm", cam.dFilm);
-
-
-  #if 0
-  auto film = imageio::read("../HDR_PPM/seymour_park.ppm");
-  Float max = film.max();
-
-  auto copy1 = film;
-  auto copy2 = film;
-  auto copy3 = film;
-  auto copy4 = film;
-
-  //tonemap::Gamma(2.2, max).applyTo(film);
-  //assert(film.max() == 1, "film max !=1");
-  //imageio::write("gamma22eq.ppm", film);
-//
-  //tonemap::Gamma(1, max).applyTo(copy1);
-  //assert(copy1.max() == 1, "copy1 max !=1");
-  //imageio::write("eq.ppm", copy1);
-//
-  //tonemap::Gamma(1, 1).applyTo(copy2);
-  //assert(copy2.max() == 1, "copy2 max !=1");
-  //imageio::write("clamp.ppm", copy1);
-//
-  //tonemap::Reinhard2002().applyTo(copy3);
-  //assert(copy3.max() == 1, "copy3 max !=1");
-  //imageio::write("reinhard2002.ppm", copy3);
-
-  tonemap::Reinhard2005().applyTo(copy4);
-  assert(copy4.max() == 1, "copy4 max !=1");
-  imageio::write("reinhard2005default.ppm", copy4);
-  #endif
-
+  // //tonemap::Reinhard2002().applyTo(cam.dFilm);
+  // //assert(cam.dFilm.max() == 1, "film max !=1");
+  // //image::write("testD.ppm", cam.dFilm);
 
   return 0;
 }

@@ -8,10 +8,10 @@
 class Camera {
   public:
 
-    Camera(size_t width, size_t height)
-      : film(width, height, 10000),
-        nFilm(width, height, 10000),
-        dFilm(width, height, 10000) {} // TODO: move to .cc
+    Camera(size_t width, size_t height, size_t color_res = 10000)
+      : film(width, height, color_res),
+        nFilm(width, height, color_res),
+        dFilm(width, height, color_res) {}
 
     virtual Ray getRay(size_t x, size_t y) const = 0;
     virtual void writeColor(size_t x, size_t y, const Direction &color) = 0;
