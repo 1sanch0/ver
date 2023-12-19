@@ -25,6 +25,7 @@ namespace utils {
           std::string hintChoices() const;
           std::string hintDefault() const;
           std::string hintNargs() const;
+          std::string hintFlag() const;
           std::string hintHelp() const;
 
         private:
@@ -61,7 +62,6 @@ namespace utils {
       std::vector<Argument> positional_arguments;
       std::vector<Argument> optional_arguments;
       std::set<std::string> names;
-      // std::unordered_map<std::string, Argument> arguments;
   };
 }
 

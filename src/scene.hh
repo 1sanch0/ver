@@ -10,6 +10,8 @@
 
 #include "spectrum.hh"
 
+#include "accelerators/bvh.hh"
+
 class Scene {
   public:
     Scene() = default;
@@ -60,6 +62,17 @@ class Scene {
 
     void add(std::unique_ptr<Primitive> primitive) { scene.push_back(std::move(primitive)); }
     void add(const LightPoint &light) { lights.push_back(light); }
+
+    void makeBVH() {
+      std::vector<std::shared_ptr<Primitive>> p(scene.size());
+
+      for (size_t i = 0; i < scene.size(); i++)
+        p[i] = std::move(scene[i]);
+      
+      scene.clear();
+
+      scene.push_back(std::make_unique<BVH>(std::move(p)));
+    }
 
   public:
     std::vector<std::unique_ptr<Primitive>> scene;

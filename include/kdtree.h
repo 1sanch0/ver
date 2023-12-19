@@ -1,5 +1,9 @@
 #pragma once
 
+// I didn't write this code btw.
+// I got it from my university's course material
+// don't know who wrote it but shout out to them though
+
 #include <vector>
 #include <array>
 #include <algorithm>

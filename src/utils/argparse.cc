@@ -7,7 +7,7 @@
 
 namespace utils {
   ArgumentParser::Argument::Argument(const std::string &name, const std::string &help)
-    : name_{name}, choices_{}, default_{}, nargs_{1, 1}, help_{help} {}
+    : name_{name}, choices_{}, default_{}, nargs_{1, 1}, help_{help}, isFlag{false} {}
 
   ArgumentParser::Argument &ArgumentParser::Argument::choices(const std::vector<std::string> &choices) {
     this->choices_ = choices;
@@ -97,6 +97,13 @@ namespace utils {
     return hint;
   }
 
+  std::string ArgumentParser::Argument::hintFlag() const {
+    std::string hint = "";
+    if (isFlag)
+      hint += " (flag)";
+    return hint;
+  }
+
   std::string ArgumentParser::Argument::hintHelp() const {
     std::string hint = "";
     if (!help_.empty()) {
@@ -154,22 +161,28 @@ namespace utils {
         const std::string name = arg;
         // Look for argument name in optional_arguments
         auto it = std::find_if(optional_arguments.begin(), optional_arguments.end(), 
-          [&name](const Argument &arg) { return arg.name_ == name; });
+          [&name](const Argument &a) { return a.name_ == name; });
 
         if (it == optional_arguments.end())
           throw std::runtime_error("Argument " + name + " not found");
         
+        const bool isFlag = it->isFlag;
         const auto &choices = it->choices_;
         const uint max = it->nargs_.max;
         const uint min = it->nargs_.min;
         auto &values = args[name];
         values.clear(); // Clear default values
 
-        i++;
-        for (uint j = 0; j < max && i < argc && argv[i][0] != '-'; i++, j++) {
-          if (choices.size() > 0 && std::find(choices.begin(), choices.end(), argv[i]) == choices.end())
-            throw std::runtime_error("Invalid value for argument " + name + ": " + argv[i] + " (expected one of" + it->hintChoices() + ")");
-          values.push_back(argv[i]);
+        if (isFlag) {
+          values.push_back("true"); // TODO: Has to be the opposite of the default value
+        } else {
+          i++;
+          for (uint j = 0; j < max && i < argc && argv[i][0] != '-'; i++, j++) {
+            if (choices.size() > 0 && std::find(choices.begin(), choices.end(), argv[i]) == choices.end())
+              throw std::runtime_error("Invalid value for argument " + name + ": " + argv[i] + " (expected one of" + it->hintChoices() + ")");
+            values.push_back(argv[i]);
+          }
+          i--;
         }
 
         if (values.size() < min)
@@ -193,6 +206,7 @@ namespace utils {
             throw std::runtime_error("Invalid value for argument " + name + ": " + argv[i] + " (expected one of" + positional_arguments[positional].hintChoices() + ")");
           values.push_back(argv[i]);
         }
+        i--;
 
         if (values.size() < min)
           throw std::runtime_error("Too few values for argument " + name);
@@ -270,6 +284,7 @@ namespace utils {
       usage << arg.hintChoices();
       usage << arg.hintDefault();
       usage << arg.hintNargs();
+      usage << arg.hintFlag();
       usage << std::endl;
     }
 
@@ -282,6 +297,7 @@ namespace utils {
       usage << arg.hintChoices();
       usage << arg.hintDefault();
       usage << arg.hintNargs();
+      usage << arg.hintFlag();
       usage << std::endl;
     }
 

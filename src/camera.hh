@@ -15,25 +15,23 @@ class Camera {
 
     virtual Ray getRay(size_t x, size_t y) const = 0;
     virtual void writeColor(size_t x, size_t y, const Direction &color) = 0;
-    #ifndef NDEBUG
     virtual void writeNormal(size_t x, size_t y, const Direction &normal) = 0;
     virtual void writeDepth(size_t x, size_t y, Float depth) = 0;
-    #endif
 
   public: // Portected
     Film film;
-    #ifndef NDEBUG
     Film nFilm, dFilm; // normal and depth
-    #endif
 };
 
 class PinholeCamera : public Camera {
   public:
     PinholeCamera(size_t width, size_t height, const Point &eye_, const Direction &left_, const Direction &up_, const Direction &forward_)
-      : Camera(width, height), eye(eye_), left(left_), up(up_), forward(forward_) {} // TODO: move to .cc
+      : Camera(width, height), eye(eye_), left(left_), up(up_), forward(forward_) {
+        // TODO: Check orthogonality and normalization
+      }
 
     Ray getRay(size_t x, size_t y) const override {
-      assert(x < film.getWidth(), "x < width");
+      assert(x <= film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
       const Float u = ((film.getWidth()-1 - x) - (Float)film.getWidth() / 2.0f) / ((Float)film.getWidth() / 2.0f);

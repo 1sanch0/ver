@@ -194,15 +194,15 @@ void CornellBox(Scene &scene) {
   #endif 
 
   #if USE_BVH
-  std::cout << "S': " << scene.scene.size() << std::endl;
-  std::vector<std::shared_ptr<Primitive>> p(scene.scene.size());
-  for (int i = 0; i < scene.scene.size(); i++)
-    p[i] = std::move(scene.scene[i]);
-  p.reserve(p.size());
-  scene.scene = std::vector<std::unique_ptr<Primitive>>();
-  scene.scene.push_back(std::make_unique<BVH>(std::move(p)));
+  // std::cout << "S': " << scene.scene.size() << std::endl;
+  // std::vector<std::shared_ptr<Primitive>> p(scene.scene.size());
+  // for (int i = 0; i < scene.scene.size(); i++)
+  //   p[i] = std::move(scene.scene[i]);
+  // p.reserve(p.size());
+  // scene.scene = std::vector<std::unique_ptr<Primitive>>();
+  // scene.scene.push_back(std::make_unique<BVH>(std::move(p)));
   #endif
-  std::cout << "S: " << scene.scene.size() << std::endl;
+  // std::cout << "S: " << scene.scene.size() << std::endl;
 
   // auto meshFront = Plane(Point(0, 0, -5), Direction(0, 1, 0), Direction(1, 0, 0));
   // scene.add(std::make_unique<GeometricPrimitive>(
@@ -275,6 +275,14 @@ int main(int argc, char **argv) {
   
   parser.addArgument("-d", "Max recursion depth")
     .default_value("24");
+
+  parser.addArgument("--normals", "Save scene normals image")
+    .default_value("false")
+    .flag();
+  
+  parser.addArgument("--depth", "Save depth image")
+    .default_value("false")
+    .flag();
   
   parser.addArgument("-t", "Tonemap to use")
     .choices({"gamma", "reinhard2002", "reinhard2005"})
@@ -291,8 +299,8 @@ int main(int argc, char **argv) {
     .choices({"pinhole", "orthographic"})
     .default_value("pinhole");
 
-  parser.addArgument("-p", "Hemisphere sampling method")
-    .choices({"uniform", "cosine"})
+  parser.addArgument("--sampler", "Hemisphere sampling method")
+    .choices({"solid_angle", "cosine"})
     .default_value("cosine");
   
   parser.addArgument("-f", "Filename to save the image")
@@ -303,8 +311,7 @@ int main(int argc, char **argv) {
     .flag();
   
   parser.addArgument("--bvh", "Use BVH")
-    .default_value("false")
-    .flag();
+    .default_value("true");
   
   parser.addArgument("--merge", "Merge HDR files into a single one and exit")
     .nargs('*');
@@ -324,40 +331,71 @@ int main(int argc, char **argv) {
 
   // TODO: perezaaaaa
 
-
-
+  #if 0
+  // Print args
+  std::cout << "Arguments:" << std::endl;
+  for (const auto &arg : args) {
+    std::cout << "  " << arg.first << ": ";
+    for (const auto &value : arg.second)
+      std::cout << value << " ";
+    std::cout << std::endl;
+  }
   exit(0);
+  #endif
 
-  
-  #if 1
+  std::string integrator = args["integrator"][0];
+  int width = std::stoi(args["--width"][0]);
+  int height = std::stoi(args["--width"][0]);
+  size_t spp = std::stoi(args["--spp"][0]);
+  size_t maxDepth = std::stoi(args["-d"][0]);
+  bool saveNormals = args["--normals"][0] == "true";
+  bool saveDepth = args["--depth"][0] == "true";
+  std::string tonemap = args["-t"][0];
+  std::string camera = args["-c"][0];
+  HemisphereSampler sampler = (args["--sampler"][0] == "solid_angle") ? SOLID_ANGLE : COSINE;
+  std::string filename = args["-f"][0];
+  bool saveHDR = args["--hdr"][0] == "true";
+  bool useBVH = args["--bvh"][0] == "true";
+
   Scene cornellBoxScene;
   CornellBox(cornellBoxScene);
+  if (useBVH)
+    cornellBoxScene.makeBVH();
 
-  int width = 1280/8;//720;
-  int height = 1280/8;
-
-  #if 1
   Point O(0, 0, -3.5);
   Direction left(-1, 0, 0), up(0, 1, 0), forward(0, 0, 3);
   PinholeCamera cam(width, height, O, left, up, forward);
-  #else
-  Point O(0.5, 1, -0.25);
-  Direction left(0, 0, 1), up(-1, 0, 0), forward(0, -9.5, 0);
-  PinholeCamera cam(width, height, O, left, up, forward);
-  #endif
-  // Point O(0, -0.5, 0);
-  // Direction left(0, 0, -1), up(0, 1, 0), forward(-0.7, -0.1, 0);
-  // PinholeCamera cam(width, height, O, left, up, forward.normalize());
 
-  //raytracer::render(cam, cornellBoxScene, 6);
-  //raytracer::render(cam, mirrorScene, 6);
+  // if (camera == "orthographic")
+  //   cam = OrthographicCamera(width, height, O, left, up, forward);
 
-  size_t spp = 256;
-  size_t maxDepth = 24;
-  HemisphereSampler sampler = COSINE;
-  pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);
-  // photonmapper::render(cam, cornellBoxScene, 101);
+  if (integrator == "pathtracer")
+    pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);
+  else if (integrator == "photonmapper")
+    photonmapper::render(cam, cornellBoxScene, 101/*TODO*/);
+  
+  if (saveHDR) {
+    image::write("hdr_" + filename, cam.film);
+  } else {
+    if (tonemap == "gamma")
+      tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
+    else if (tonemap == "reinhard2002")
+      tonemap::Reinhard2002().applyTo(cam.film);
+    else if (tonemap == "reinhard2005")
+      tonemap::Reinhard2005().applyTo(cam.film);
+    else
+      assert(false, "Unknown tonemap");
+  }
 
+  if (saveNormals) {
+    tonemap::Reinhard2002().applyTo(cam.nFilm);
+    image::write("normals_" + filename, cam.nFilm);
+  }
+
+  if (saveDepth) {
+    // tonemap::Reinhard2002().applyTo(cam.nFilm);
+    // image::write("normals_" + filename, cam.nFilm);
+  }
 
   tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
   // tonemap::Reinhard2002().applyTo(cam.film);
@@ -375,8 +413,6 @@ int main(int argc, char **argv) {
   //assert(cam.dFilm.max() == 1, "film max !=1");
   //image::write("testD.ppm", cam.dFilm);
 
-  //ply::read("../model.ply");
-  #endif
 
   #if 0
   auto film = imageio::read("../HDR_PPM/seymour_park.ppm");
