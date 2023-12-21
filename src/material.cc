@@ -20,8 +20,8 @@ namespace Slides {
     const Mat4 transform(x, y, z);
 
     wi = transform * Direction(std::sin(theta) * std::cos(phi),
-                              std::sin(theta) * std::sin(phi),
-                              std::cos(theta));
+                               std::sin(theta) * std::sin(phi),
+                               std::cos(theta));
 
     return k * invProb; // * M_1_PI; gets cancelled out     <--
   }

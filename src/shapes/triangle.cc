@@ -1,79 +1,4 @@
-#include "shape.hh"
-
-bool Shape::intersect(const Ray &ray, bool testAlphaTexture) const {
-  Float tHit;
-  SurfaceInteraction interact;
-  return intersect(ray, tHit, interact, testAlphaTexture);
-}
-
-Sphere::Sphere(const Point &origin, Float radius) : o{origin}, r{radius} {}
-
-Bounds Sphere::bounds() const { 
-  const Direction min(-r, -r, -r);
-  const Direction max(r, r, r);
-  return Bounds(o+min, o+max);
-}
-
-bool Sphere::intersect(const Ray &ray, Float &tHit,
-                       SurfaceInteraction &interact,
-                       bool testAlphaTexture) const {
-  // https://link.springer.com/content/pdf/10.1007/978-1-4842-4427-2_7.pdf#0004286892.INDD%3AAnchor%2019%3A19
-  Point G = o;
-  Direction f = ray.o - G;
-
-  Float b = (-f).dot(ray.d);  // if b < 0 G is behind the ray
-  Float c = f.dot(f) - r * r; // if c > 0, ray.o is outside the sphere;
-
-  Direction l = f + ray.d * b;
-  Float discrim = r*r - l.dot(l);
-
-  if (discrim < 0) return false;
-
-  Float q = b + sign(b) * std::sqrt(discrim);
-
-  Float t0 = c / q;
-  Float t1 = q;
-
-  if (t1 < t0) std::swap(t0, t1); // t0 will be less than or equal to t1
-  if (t1 <= 0) return false;
-
-  tHit = (t0 <= 0) ? t1 : t0;
-
-  interact.n = (ray(tHit) - G) / r;
-
-  // TODO:remove
-  interact.p = ray(tHit);
-  interact.t = tHit;
-  interact.wo = (ray.o - ray(tHit)).normalize();
-
-  // TODO: review (esta mal pero buen (hace fatla cambiar de base))
-  // Float azimuth = std::atan2(interact.p.y / r, interact.p.x / r);
-
-  // Float tmp = interact.p.z / r;
-  // Float inclination = std::acos((tmp < 1) ? tmp : 1);
-
-  // Direction longitude = Direction(
-  //     std::cos(azimuth) * std::sin(inclination),
-  //     std::sin(azimuth) * std::sin(inclination),
-  //     std::cos(inclination)
-  //   ).normalize();// TODO (this.planet.basis); // Cambio de base
-
-  // Direction latitude = Direction(
-  //     -std::sin(azimuth) * std::sin(inclination),
-  //     std::cos(azimuth) * std::sin(inclination),
-  //     0
-  //   ).normalize(); //TODO (this.planet.basis); // Cambio de base
-  
-  // interact.du = longitude;
-  // interact.dv = latitude;
-  interact.sphere = true;
-  
-  return true;
-}
-
-Float Sphere::area() const {
-  return 4.0 * M_PI * r * r;
-}
+#include "triangle.hh"
 
 TriangleMesh::TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply) {
   
@@ -190,8 +115,7 @@ Bounds Triangle::bounds() const {
 
 // Shout out: https://github.com/mmp/pbrt-v3/blob/13d871faae88233b327d04cda24022b8bb0093ee/src/shapes/triangle.cpp#L188
 bool Triangle::intersect(const Ray &ray, Float &tHit,
-                         SurfaceInteraction &interact,
-                         bool testAlphaTexture) const {
+                         SurfaceInteraction &interact) const {
   const Point &p0 = mesh->p[v[0]];
   const Point &p1 = mesh->p[v[1]];
   const Point &p2 = mesh->p[v[2]];
@@ -401,18 +325,4 @@ void Triangle::getUVs(Vec2 uv[2]) const {
     uv[1] = mesh->uv[v[1]];
     uv[2] = mesh->uv[v[2]];
   }
-}
-
-std::shared_ptr<TriangleMesh> Quad(const Point &origin, const Direction &u, const Direction &v, const Direction &n) {
-  std::vector<Point> p = {origin + u + v, // Top right
-                          origin - u + v, // Bottom right
-                          origin - u - v, // Bottom left
-                          origin + u - v};// Top left
-  
-  std::vector<size_t> indices = {0, 1, 3, 1, 2, 3};
-  std::vector<Direction> N = {n, n, n, n, n, n};
-  std::vector<Direction> s;
-  std::vector<Vec2> uv;
-
-  return std::make_shared<TriangleMesh>(Mat4::identity(), indices, p, N, s, uv);
 }

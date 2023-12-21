@@ -3,7 +3,10 @@
 #include "io/io.hh"
 #include "film.hh"
 #include "tonemap/tonemap.hh"
-#include "shape.hh"
+
+#include "shapes/sphere.hh"
+#include "shapes/triangle.hh"
+#include "shapes/quad.hh"
 
 #include "io/simply.hh"
 
@@ -34,7 +37,7 @@
 #define DEFAULT_FINAL 4
 
 
-#define VERSION TEAPOT
+#define VERSION DEFAULT_FINAL
 #define USE_BVH 1
 // #define DEBUG_BVH 0 && USE_BVH
 
@@ -265,10 +268,10 @@ int main(int argc, char **argv) {
     .default_value("pathtracer");
 
   parser.addArgument("--width", "Image width")
-    .default_value("1280");
+    .default_value("300");
   
   parser.addArgument("--height", "Image height")
-    .default_value("720");
+    .default_value("300");
 
   parser.addArgument("--spp", "Samples per pixel")
     .default_value("256");
@@ -345,7 +348,7 @@ int main(int argc, char **argv) {
 
   std::string integrator = args["integrator"][0];
   int width = std::stoi(args["--width"][0]);
-  int height = std::stoi(args["--width"][0]);
+  int height = std::stoi(args["--height"][0]);
   size_t spp = std::stoi(args["--spp"][0]);
   size_t maxDepth = std::stoi(args["-d"][0]);
   bool saveNormals = args["--normals"][0] == "true";

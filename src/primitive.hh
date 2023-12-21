@@ -3,7 +3,7 @@
 
 #include "ver.hh"
 #include "geometry.hh"
-#include "shape.hh"
+#include "shapes/shape.hh"
 #include "interaction.hh"
 
 class Primitive {

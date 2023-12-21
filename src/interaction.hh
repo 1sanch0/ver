@@ -16,6 +16,7 @@ class Interaction {
     Point p;
     Direction wo;
     Direction n;
+    Float t;
 };
 
 namespace Slides {
