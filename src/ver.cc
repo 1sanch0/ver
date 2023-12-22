@@ -136,6 +136,7 @@ void CornellBox(Scene &scene) {
 
   auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
   auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  // auto RBMaterial = std::make_shared<Slides::Material>(black, Direction(1,1,1), black, black);
 
   // auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
   // auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);

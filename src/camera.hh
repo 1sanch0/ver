@@ -34,16 +34,28 @@ class PinholeCamera : public Camera {
       assert(x <= film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
-      const Float aspectRatio = (Float)film.getWidth() / (Float)film.getHeight();
+      // const Float aspectRatio = (Float)film.getWidth() / (Float)film.getHeight();
 
-      const Direction top_left = forward + up + left * aspectRatio;
-      const Direction dx = -left * 2.0f / (Float)film.getWidth() * aspectRatio;
-      const Direction dy = -up * 2.0f / (Float)film.getHeight();
+      // const Direction top_left = forward + up + left * aspectRatio;
+      // const Direction dx = -left * 2.0f / (Float)film.getWidth() * aspectRatio;
+      // const Direction dy = -up * 2.0f / (Float)film.getHeight();
       
-      const Float rx = uniform(0.0f, 1.0f);
-      const Float ry = uniform(0.0f, 1.0f);
+      // const Float rx = uniform(0.0f, 1.0f);
+      // const Float ry = uniform(0.0f, 1.0f);
 
-      const Direction d = top_left + dx * (x + rx) + dy * (y + ry);
+      // const Direction d = top_left + dx * (x + rx) + dy * (y + ry);
+      
+      const Float u = ((film.getWidth()-1 - x) - (Float)film.getWidth() / 2.0f) / ((Float)film.getWidth() / 2.0f);
+      const Float v = ((film.getHeight()-1 - y) - (Float)film.getHeight() / 2.0f) / ((Float)film.getHeight() / 2.0f);
+
+
+      const Float du = ((film.getWidth()-1 - 1) - (Float)film.getWidth() / 2.0f) / ((Float)film.getWidth() / 2.0f) - ((film.getWidth()-1) - (Float)film.getWidth() / 2.0f) / ((Float)film.getWidth() / 2.0f);
+      const Float dv = ((film.getHeight()-1 - 1) - (Float)film.getHeight() / 2.0f) / ((Float)film.getHeight() / 2.0f) - ((film.getHeight()-1) - (Float)film.getHeight() / 2.0f) / ((Float)film.getHeight() / 2.0f);
+
+      const Float su = uniform(0.0f, du);
+      const Float sv = uniform(0.0f, dv);
+
+      const Direction d = forward + up * (v+sv) + left * (u+su);
       
       return Ray(eye, d.normalize());
     }
@@ -56,7 +68,7 @@ class PinholeCamera : public Camera {
       assert(color.y >= 0, "y >= 0");
       assert(color.z >= 0, "z >= 0");
 
-      Pixel &px = film[y * film.getWidth() + x];
+      Pixel &px = film[y * film.getHeight() + x];
 
       px.r += color.x;
       px.g += color.y;
