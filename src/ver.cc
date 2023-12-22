@@ -2,7 +2,7 @@
 #include "geometry.hh"
 #include "io/io.hh"
 #include "film.hh"
-#include "tonemap/tonemap.hh"
+#include "image/tonemap.hh"
 
 #include "shapes/sphere.hh"
 #include "shapes/triangle.hh"
@@ -382,11 +382,11 @@ int main(int argc, char **argv) {
     image::write("hdr_" + filename, cam.film);
   } else {
     if (tonemap == "gamma")
-      tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
+      image::tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
     else if (tonemap == "reinhard2002")
-      tonemap::Reinhard2002().applyTo(cam.film);
+      image::tonemap::Reinhard2002().applyTo(cam.film);
     else if (tonemap == "reinhard2005")
-      tonemap::Reinhard2005().applyTo(cam.film);
+      image::tonemap::Reinhard2005().applyTo(cam.film);
     else
       assert(false, "Unknown tonemap");
 
@@ -394,30 +394,14 @@ int main(int argc, char **argv) {
   }
 
   if (saveNormals) {
-    tonemap::Reinhard2002().applyTo(cam.nFilm);
+    image::tonemap::Reinhard2002().applyTo(cam.nFilm);
     image::write("normals_" + filename, cam.nFilm);
   }
 
   if (saveDepth) {
-    tonemap::Reinhard2002().applyTo(cam.dFilm);
+    image::tonemap::Reinhard2002().applyTo(cam.dFilm);
     image::write("depth_" + filename, cam.dFilm);
   }
-
-  // tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
-  // // tonemap::Reinhard2002().applyTo(cam.film);
-  // std::cout << "Max: " << cam.film.max() << std::endl;
-  // // assert(cam.film.max() == 1, "fiml max !=1");
-  // image::write("test.ppm", cam.film);
-
-  // std::cout << "Max: " << cam.nFilm.max() << std::endl;
-  // tonemap::Reinhard2002().applyTo(cam.nFilm);
-  // // std::cout << "Max: " << filmNormal.max() << std::endl;
-  // assert(cam.nFilm.max() == 1, "film max !=1");
-  // image::write("testN.ppm", cam.nFilm);
-
-  // //tonemap::Reinhard2002().applyTo(cam.dFilm);
-  // //assert(cam.dFilm.max() == 1, "film max !=1");
-  // //image::write("testD.ppm", cam.dFilm);
 
   return 0;
 }
