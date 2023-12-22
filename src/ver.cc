@@ -1,6 +1,6 @@
 #include "ver.hh"
 #include "geometry.hh"
-#include "io/io.hh"
+#include "image/io.hh"
 #include "film.hh"
 #include "image/tonemap.hh"
 

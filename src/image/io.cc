@@ -4,8 +4,6 @@
 #include <fstream>
 #include <sstream>
 
-#include "simply.hh"
-
 // Removes all non-(alphanumeric+'.') characters
 static std::string cleanString(const std::string &str) {
   std::string out;
