@@ -13,12 +13,13 @@
 #define DEBUG_CODE(code) code
 #endif
 
+#include <cstdlib>
 #define assert(expr, msg) DEBUG_CODE({                              \
   if (!(expr)) {                                                    \
     fprintf(stderr, "Assertion failed: %s, in function %s, file %s, line %d\n", #expr, __FUNCTION__, __FILE__, __LINE__); \
     fprintf(stderr, msg);                                           \
     fprintf(stderr, "\n");                                          \
-    exit(1);                                                        \
+    std::abort();                                                   \
   }                                                                 \
 })
 

@@ -26,6 +26,7 @@ struct SurfaceInteraction { // TODO: Temporal
   Point p;
   Direction n;
   /* TEST */
+  Float u, v;
   Direction du, dv; 
   bool sphere = false;
   /* TEST */

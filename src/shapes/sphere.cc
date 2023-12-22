@@ -38,6 +38,8 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   interact.p = ray(tHit);
   interact.t = tHit;
   interact.wo = (ray.o - ray(tHit)).normalize();
+  interact.u = std::atan2(interact.p.y, interact.p.x) / (2 * M_PI) + 0.5; // TODO: REVIEW & IMPROVE
+  interact.v = std::acos(interact.p.z / r) / M_PI;
 
   // TODO: review (esta mal pero buen (hace fatla cambiar de base))
   // Float azimuth = std::atan2(interact.p.y / r, interact.p.x / r);

@@ -37,7 +37,7 @@ class Scene {
     }
 
     Spectrum directLight(const SurfaceInteraction &interact) const {
-      constexpr Float eps = 1e-4;
+      constexpr Float eps = 5e-4;
 
       Spectrum L;
       const Point x = interact.p;
