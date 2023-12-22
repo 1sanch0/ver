@@ -82,7 +82,7 @@ namespace Slides {
     const Float n2 = (enters) ? 2 : 1.0;
     const Float nn = n1 / n2;
 
-    const Float cosI = -v.dot(n);
+    const Float cosI = v.dot(n);
     const Float sinT2 = nn * nn * (1.0 - cosI * cosI);
 
     if (sinT2 > 1.0) { // Total internal reflection
@@ -91,26 +91,23 @@ namespace Slides {
     }
 
     // Fresnel effect (Schlick's approximation) // Move to function
-    // Float r0 = (n1 - n2) / (n1 + n2);
-    // r0 *= r0;
-    // Float cosX = (enters) ? -cosI : std::sqrt(1.0 - sinT2);
-    // if (n1 > n2)
-    //   cosX = std::sqrt(1.0 - sinT2);
-    // const Float x = 1.0 - cosX;
-    // const Float r = r0 + (1.0 - r0) * x * x * x * x * x;
+    Float r0 = (n1 - n2) / (n1 + n2);
+    r0 *= r0;
+    Float cosX = (enters) ? -cosI : std::sqrt(1.0 - sinT2);
+    if (n1 > n2)
+      cosX = std::sqrt(1.0 - sinT2);
+    const Float x = 1.0 - cosX;
+    const Float r = r0 + (1.0 - r0) * x * x * x * x * x;
 
-    // if (uniform(0, 1) < r) { // Reflect
-    //   wi = v - n * 2 * v.dot(n);
-    //   return k * invProb; // TODO: la rulete rusa aqui que?
-    // }
+    if (uniform(0, 1) < r) { // Reflect
+      wi = v - n * 2 * v.dot(n);
+      return k * invProb; // TODO: la rulete rusa aqui que?
+    }
 
-    // const Float cosT = std::sqrt(1.0 - sinT2);
-    // wi = v * nn + n * (nn * cosI - cosT);
-    Float theta2 = std::asin(std::sqrt(sinT2));
-    Direction m = (v + n * cosI).normalize() * (1.0/std::sqrt((1.0 - cosI * cosI)));
-    wi = -n * std::cos(theta2) + m * std::sin(theta2);
+    const Float cosT = std::sqrt(1.0 - sinT2);
+    wi = v * nn + n * (nn * cosI - cosT);
 
-    return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
+     return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
   }
 
   Float RefractionBRDF::p(HemisphereSampler /*sampler*/, const Direction &/*wi*/) const {

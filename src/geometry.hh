@@ -1,12 +1,11 @@
 #ifndef GEOMETRY_H_
 #define GEOMETRY_H_
 
+#include "ver.hh"
 #include <iostream>
 #include <limits>
 #include <algorithm>
 #include <cmath>
-
-#include "ver.hh"
 
 // TODO: explicar un poco
 //
