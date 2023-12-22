@@ -3,13 +3,13 @@
 #include <list>
 
 namespace kernel {
-  Float box(Float distance, Float rk) { return /*M_1_PI * */ (1.0 / (rk * rk)); }
-  Float cone(Float distance, Float rk) {
-    return 0;
-  }
-  Float gaussian(Float distance, Float rk) {
-    return 0;
-  }
+  Float box(Float /*distance*/, Float rk) { return /*M_1_PI * */ (1.0 / (rk * rk)); }
+  // Float cone(Float distance, Float rk) {
+  //   return 0;
+  // }
+  // Float gaussian(Float distance, Float rk) {
+  //   return 0;
+  // }
 }
 
 namespace photonmapper {

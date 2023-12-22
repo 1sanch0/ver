@@ -1,12 +1,11 @@
 #ifndef VER_H_
 #define VER_H_
 
-#include <iostream>
-#include <stdint.h>
-#include <stddef.h>
-#include <algorithm>
-#include <memory>
-#include <random>
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+  #define _USE_MATH_DEFINES
+  typedef unsigned int uint;
+  typedef unsigned long ulong;
+#endif
 
 #ifdef NDEBUG
 #define DEBUG_CODE(code)
@@ -14,16 +13,21 @@
 #define DEBUG_CODE(code) code
 #endif
 
-#include <csignal>
 #define assert(expr, msg) DEBUG_CODE({                              \
   if (!(expr)) {                                                    \
     fprintf(stderr, "Assertion failed: %s, in function %s, file %s, line %d\n", #expr, __FUNCTION__, __FILE__, __LINE__); \
     fprintf(stderr, msg);                                           \
     fprintf(stderr, "\n");                                          \
-    raise(SIGSEGV); \
     exit(1);                                                        \
   }                                                                 \
 })
+
+#include <iostream>
+#include <stdint.h>
+#include <stddef.h>
+#include <algorithm>
+#include <memory>
+#include <random>
 
 #ifndef EMSCRIPTEN
 #include <omp.h>
@@ -37,9 +41,6 @@ inline
 Float uniform(Float min, Float max) {
   static thread_local std::mt19937 generator;
   std::uniform_real_distribution<Float> distr(min, max);
-  // std::random_device                    rand_dev;
-  // std::mt19937                          generator(rand_dev());
-  // std::uniform_real_distribution<Float> distr(range_from, range_to);
   return distr(generator);
 }
 

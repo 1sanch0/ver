@@ -29,15 +29,15 @@ class Vec2 { // TODO POINT2 DIRECTION2?
     Float x, y;
 
   public:
-    constexpr bool hasNaNs() const { return std::isnan(x) || std::isnan(y); }
+    bool hasNaNs() const { return std::isnan(x) || std::isnan(y); }
 
-    constexpr Vec2() : x{0}, y{0} { assert(!hasNaNs(), "Has NaNs"); }
-    constexpr Vec2(Float x_, Float y_) : x{x_}, y{y_} { assert(!hasNaNs(), "Has NaNs"); }
+    Vec2() : x{0}, y{0} { assert(!hasNaNs(), "Has NaNs"); }
+    Vec2(Float x_, Float y_) : x{x_}, y{y_} { assert(!hasNaNs(), "Has NaNs"); }
 
-    [[nodiscard]] constexpr Vec2 operator +(const Vec2 &rhs) const { return Vec2(x + rhs.x, y + rhs.y); }
-    [[nodiscard]] constexpr Vec2 operator -(const Vec2 &rhs) const { return Vec2(x - rhs.x, y - rhs.y); }
+    [[nodiscard]] Vec2 operator +(const Vec2 &rhs) const { return Vec2(x + rhs.x, y + rhs.y); }
+    [[nodiscard]] Vec2 operator -(const Vec2 &rhs) const { return Vec2(x - rhs.x, y - rhs.y); }
 
-    [[nodiscard]] constexpr Vec2 operator *(Float value) const { return Vec2(x + value, y + value); }
+    [[nodiscard]] Vec2 operator *(Float value) const { return Vec2(x + value, y + value); }
 
     [[nodiscard]] Float &operator[](unsigned int idx) {
       assert(idx < 2, "Index out of bounds(0 <= idx < 3)");
@@ -48,7 +48,7 @@ class Vec2 { // TODO POINT2 DIRECTION2?
       }
     }
 
-    [[nodiscard]] constexpr Float operator[](unsigned int idx) const {
+    [[nodiscard]] Float operator[](unsigned int idx) const {
       assert(idx < 2, "Index out of bounds(0 <= idx < 3)");
       switch (idx) {
         case 0: return x;
@@ -68,14 +68,14 @@ class Vec3 {
     Float x, y, z;
 
   public:
-    constexpr bool hasNaNs() const { return std::isnan(x) || std::isnan(y) || std::isnan(z); }
+    bool hasNaNs() const { return std::isnan(x) || std::isnan(y) || std::isnan(z); }
 
-    constexpr Vec3() : x{0}, y{0}, z{0} { assert(!hasNaNs(), "Has NaNs"); }
-    constexpr Vec3(Float x_, Float y_, Float z_) : x{x_}, y{y_}, z{z_} { assert(!hasNaNs(), "Has NaNs"); }
+    Vec3() : x{0}, y{0}, z{0} { assert(!hasNaNs(), "Has NaNs"); }
+    Vec3(Float x_, Float y_, Float z_) : x{x_}, y{y_}, z{z_} { assert(!hasNaNs(), "Has NaNs"); }
 
-    [[nodiscard]] constexpr Float min() const { return std::min(x, std::min(y, z)); }
-    [[nodiscard]] constexpr Float max() const { return std::max(x, std::max(y, z)); }
-    [[nodiscard]] constexpr unsigned int argmax() const { return (x > y) ? ((x > z) ? 0 : 2) : ((y > z) ? 1 : 2); }
+    [[nodiscard]] Float min() const { return std::min(x, std::min(y, z)); }
+    [[nodiscard]] Float max() const { return std::max(x, std::max(y, z)); }
+    [[nodiscard]] unsigned int argmax() const { return (x > y) ? ((x > z) ? 0 : 2) : ((y > z) ? 1 : 2); }
 
     [[nodiscard]] Float &operator[](unsigned int idx) {
       assert(idx < 3, "Index out of bounds(0 <= idx < 3)");
@@ -87,7 +87,7 @@ class Vec3 {
       }
     }
 
-    [[nodiscard]] constexpr Float operator[](unsigned int idx) const {
+    [[nodiscard]] Float operator[](unsigned int idx) const {
       assert(idx < 3, "Index out of bounds(0 <= idx < 3)");
       switch (idx) {
         case 0: return x;
@@ -106,45 +106,46 @@ class Vec3 {
 class Direction : public Vec3 {
   public:
     using Vec3::Vec3;
-    constexpr explicit Direction(const Vec3 &vec) : Vec3::Vec3(vec) {}
+    explicit Direction(const Vec3 &vec) : Vec3::Vec3(vec) {}
 
-    [[nodiscard]] constexpr bool operator ==(const Direction &v) const { return x == v.x && y == v.y && z == v.z; }
-    [[nodiscard]] constexpr bool operator !=(const Direction &v) const { return x != v.x || y != v.y || z != v.z; }
+    [[nodiscard]] bool operator ==(const Direction &v) const { return x == v.x && y == v.y && z == v.z; }
+    [[nodiscard]] bool operator !=(const Direction &v) const { return x != v.x || y != v.y || z != v.z; }
 
-    [[nodiscard]] constexpr Direction operator -() const { return Direction(-x, -y, -z); }
+    [[nodiscard]] Direction operator -() const { return Direction(-x, -y, -z); }
 
-    [[nodiscard]] constexpr Direction operator +(const Direction &rhs) const { return Direction(x + rhs.x, y + rhs.y, z + rhs.z); }
-    [[nodiscard]] constexpr Direction operator -(const Direction &rhs) const { return Direction(x - rhs.x, y - rhs.y, z - rhs.z); }
-    [[nodiscard]] constexpr Direction operator *(Float value) const { return Direction(x * value, y * value, z * value); }
-    [[nodiscard]] constexpr Direction operator /(Float value) const {
+    [[nodiscard]] Direction operator +(const Direction &rhs) const { return Direction(x + rhs.x, y + rhs.y, z + rhs.z); }
+    [[nodiscard]] Direction operator -(const Direction &rhs) const { return Direction(x - rhs.x, y - rhs.y, z - rhs.z); }
+    [[nodiscard]] Direction operator *(Float value) const { return Direction(x * value, y * value, z * value); }
+    [[nodiscard]] Direction operator /(Float value) const {
       assert(value != 0, "Cannot devide by 0!");
       return (*this) * (1 / value);
     }
 
-    [[nodiscard]] constexpr Direction operator *(const Direction &rhs) const { return Direction(x * rhs.x, y * rhs.y, z * rhs.z); }
+    [[nodiscard]] Direction operator *(const Direction &rhs) const { return Direction(x * rhs.x, y * rhs.y, z * rhs.z); }
 
-    constexpr Direction &operator +=(const Direction &rhs) {
+    Direction &operator +=(const Direction &rhs) {
       x += rhs.x;
       y += rhs.y;
       z += rhs.z;
       assert(!hasNaNs(), "Has NaNs");
       return (*this);
     }
-    constexpr Direction &operator -=(const Direction &rhs) { return (*this) += (-rhs); }
+    Direction &operator -=(const Direction &rhs) { return (*this) += (-rhs); }
 
-    constexpr Direction &operator *=(Float value) {
+    Direction &operator *=(Float value) {
       x *= value;
       y *= value;
       z *= value;
       assert(!hasNaNs(), "Has NaNs");
       return (*this);
     }
-    constexpr Direction &operator /=(Float value) {
+    
+    Direction &operator /=(Float value) {
       assert(value != 0, "Cannot devide by 0!");
       return (*this) *= (1 / value);
     }
 
-    constexpr Direction &operator *=(const Direction &rhs) {
+    Direction &operator *=(const Direction &rhs) {
       x *= rhs.x;
       y *= rhs.y;
       z *= rhs.z;
@@ -152,15 +153,15 @@ class Direction : public Vec3 {
       return (*this);
     }
 
-    [[nodiscard]] constexpr Float sqrNorm() const { return x * x + y * y + z * z; }
-    [[nodiscard]] constexpr Float norm() const { return std::sqrt(sqrNorm()); }
-    [[nodiscard]] constexpr Direction normalize() const { return (*this) / norm(); }
+    [[nodiscard]] Float sqrNorm() const { return x * x + y * y + z * z; }
+    [[nodiscard]] Float norm() const { return std::sqrt(sqrNorm()); }
+    [[nodiscard]] Direction normalize() const { return (*this) / norm(); }
 
-    [[nodiscard]] constexpr Direction abs() const { return Direction(std::abs(x), std::abs(y), std::abs(z)); }
-    [[nodiscard]] constexpr Direction permute(uint dim1, uint dim2, uint dim3) const { return Direction((*this)[dim1], (*this)[dim2], (*this)[dim3]); }
+    [[nodiscard]] Direction abs() const { return Direction(std::abs(x), std::abs(y), std::abs(z)); }
+    [[nodiscard]] Direction permute(uint dim1, uint dim2, uint dim3) const { return Direction((*this)[dim1], (*this)[dim2], (*this)[dim3]); }
 
-    [[nodiscard]] constexpr Float dot(const Direction &rhs) const { return x * rhs.x + y * rhs.y + z * rhs.z; }
-    [[nodiscard]] constexpr Direction cross(const Direction &rhs) const {
+    [[nodiscard]] Float dot(const Direction &rhs) const { return x * rhs.x + y * rhs.y + z * rhs.z; }
+    [[nodiscard]] Direction cross(const Direction &rhs) const {
       return Direction(y * rhs.z - z * rhs.y,
                        z * rhs.x - x * rhs.z,
                        x * rhs.y - y * rhs.x);
@@ -176,16 +177,16 @@ class Direction : public Vec3 {
 class Point : public Vec3 {
   public:
     using Vec3::Vec3;
-    constexpr explicit Point(const Vec3 &vec) : Vec3::Vec3(vec) {}
+    explicit Point(const Vec3 &vec) : Vec3::Vec3(vec) {}
 
-    [[nodiscard]] constexpr bool operator ==(const Point &v) const { return x == v.x && y == v.y && z == v.z; }
-    [[nodiscard]] constexpr bool operator !=(const Point &v) const { return x != v.x || y != v.y || z != v.z; }
+    [[nodiscard]] bool operator ==(const Point &v) const { return x == v.x && y == v.y && z == v.z; }
+    [[nodiscard]] bool operator !=(const Point &v) const { return x != v.x || y != v.y || z != v.z; }
 
-    [[nodiscard]] constexpr Point operator +(const Direction &rhs) const { return Point(x + rhs.x, y + rhs.y, z + rhs.z); }
-    [[nodiscard]] constexpr Point operator -(const Direction &rhs) const { return Point(x - rhs.x, y - rhs.y, z - rhs.z); }
-    [[nodiscard]] constexpr Direction operator -(const Point &rhs) const { return Direction(x - rhs.x, y - rhs.y, z - rhs.z); }
+    [[nodiscard]] Point operator +(const Direction &rhs) const { return Point(x + rhs.x, y + rhs.y, z + rhs.z); }
+    [[nodiscard]] Point operator -(const Direction &rhs) const { return Point(x - rhs.x, y - rhs.y, z - rhs.z); }
+    [[nodiscard]] Direction operator -(const Point &rhs) const { return Direction(x - rhs.x, y - rhs.y, z - rhs.z); }
 
-    constexpr Point &operator +=(const Direction &rhs) {
+    Point &operator +=(const Direction &rhs) {
       x += rhs.x;
       y += rhs.y;
       z += rhs.z;
@@ -193,7 +194,7 @@ class Point : public Vec3 {
       return (*this);
     }
 
-    constexpr Point &operator -=(const Direction &rhs) {
+    Point &operator -=(const Direction &rhs) {
       x -= rhs.x;
       y -= rhs.y;
       z -= rhs.z;
@@ -201,8 +202,8 @@ class Point : public Vec3 {
       return (*this);
     }
 
-    [[nodiscard]] constexpr Point abs() const { return Point(std::abs(x), std::abs(y), std::abs(z)); }
-    [[nodiscard]] constexpr Point permute(uint dim1, uint dim2, uint dim3) const { return Point((*this)[dim1], (*this)[dim2], (*this)[dim3]); }
+    [[nodiscard]] Point abs() const { return Point(std::abs(x), std::abs(y), std::abs(z)); }
+    [[nodiscard]] Point permute(uint dim1, uint dim2, uint dim3) const { return Point((*this)[dim1], (*this)[dim2], (*this)[dim3]); }
 
     friend std::ostream &operator <<(std::ostream &os, const Point &v) {
       os << "Point";
@@ -213,27 +214,27 @@ class Point : public Vec3 {
 
 class Mat4 {
   public:
-    constexpr bool hasNaNs() const {
+    bool hasNaNs() const {
       for (int i = 0; i < 4 * 4; i++)
         if (std::isnan(data[i]))
           return true;
       return false;
     }
 
-    constexpr Mat4() : data{} { assert(!hasNaNs(), "Has NaNs"); }
-    constexpr explicit Mat4(Float diag) : data{} {
+    Mat4() : data{} { assert(!hasNaNs(), "Has NaNs"); }
+    explicit Mat4(Float diag) : data{} {
       for (int i = 0; i < 4; i ++)
         data[i*4 + i] = diag;
 
       assert(!hasNaNs(), "Has NaNs");
     }
 
-    constexpr Mat4(const Direction &b1, const Direction &b2, const Direction &b3)
+    Mat4(const Direction &b1, const Direction &b2, const Direction &b3)
       // : data{b1.x, b1.y, b1.z, 0, b2.x, b2.y, b2.z, 0, b3.x, b3.y, b3.z, 0, 0, 0, 0, 1} {}
       : data{b1.x, b2.x, b3.x, 0, b1.y, b2.y, b3.y, 0, b1.z, b2.z, b3.z, 0, 0, 0, 0, 1} {}
 
-    [[nodiscard]] constexpr static Mat4 identity() { return Mat4(1); }
-    [[nodiscard]] constexpr static Mat4 translation(Float dx, Float dy, Float dz) {
+    [[nodiscard]] static Mat4 identity() { return Mat4(1); }
+    [[nodiscard]] static Mat4 translation(Float dx, Float dy, Float dz) {
       Mat4 mat = Mat4::identity();
       mat.data[0*4 + 3] = dx;
       mat.data[1*4 + 3] = dy;
@@ -241,8 +242,8 @@ class Mat4 {
       assert(!mat.hasNaNs(), "Has NaNs");
       return mat;
     }
-    [[nodiscard]] constexpr static Mat4 translation(const Direction &delta) { return Mat4::translation(delta.x, delta.y, delta.z); }
-    [[nodiscard]] constexpr static Mat4 scale(Float x, Float y, Float z) {
+    [[nodiscard]] static Mat4 translation(const Direction &delta) { return Mat4::translation(delta.x, delta.y, delta.z); }
+    [[nodiscard]] static Mat4 scale(Float x, Float y, Float z) {
       Mat4 mat = Mat4::identity();
       mat.data[0*4 + 0] = x;
       mat.data[1*4 + 1] = y;
@@ -250,8 +251,8 @@ class Mat4 {
       assert(!mat.hasNaNs(), "Has NaNs");
       return mat;
     }
-    [[nodiscard]] constexpr static Mat4 scale(const Direction &scaling) { return Mat4::scale(scaling.x, scaling.y, scaling.z); }
-    [[nodiscard]] constexpr static Mat4 rotate(Float theta, const Direction &axis) {
+    [[nodiscard]] static Mat4 scale(const Direction &scaling) { return Mat4::scale(scaling.x, scaling.y, scaling.z); }
+    [[nodiscard]] static Mat4 rotate(Float theta, const Direction &axis) {
       Mat4 mat;
 
       Direction a = axis.normalize();
@@ -276,12 +277,12 @@ class Mat4 {
       assert(!mat.hasNaNs(), "Has NaNs");
       return mat;
     }
-    [[nodiscard]] constexpr static Mat4 rotate(Float theta, Float x, Float y, Float z) { return Mat4::rotate(theta, Direction(x, y, z)); }
+    [[nodiscard]] static Mat4 rotate(Float theta, Float x, Float y, Float z) { return Mat4::rotate(theta, Direction(x, y, z)); }
 
     // [[nodiscard]] constexpr Mat4 operator +(const Mat4 &rhs) const {}
     // [[nodiscard]] constexpr Mat4 operator -(const Mat4 &rhs) const {}
 
-    [[nodiscard]] constexpr Mat4 operator *(const Mat4 &rhs) const {
+    [[nodiscard]] Mat4 operator *(const Mat4 &rhs) const {
       Mat4 res;
       for (int i = 0; i < 4; i++)
         for (int k = 0; k < 4; k++)
@@ -292,7 +293,7 @@ class Mat4 {
       return res;
     }
 
-    [[nodiscard]] constexpr Point operator *(const Point &rhs) const {
+    [[nodiscard]] Point operator *(const Point &rhs) const {
       Float out[4] = {0};
       for (int i = 0; i < 4; i++) { // TODO: tengo dudas
         out[i] = data[i*4 + 0] * rhs.x +
@@ -302,7 +303,8 @@ class Mat4 {
       }
       return Point(out[0], out[1], out[2]);
     }
-    [[nodiscard]] constexpr Direction operator *(const Direction &rhs) const {
+
+    [[nodiscard]] Direction operator *(const Direction &rhs) const {
       Float out[4] = {0};
       for (int i = 0; i < 4; i++) { // TODO: tengo dudas
         out[i] = data[i*4 + 0] * rhs.x +
@@ -313,7 +315,7 @@ class Mat4 {
       return Direction(out[0], out[1], out[2]);
     }
 
-    [[nodiscard]] constexpr Mat4 invert() const {
+    [[nodiscard]] Mat4 invert() const {
       Mat4 inv;
       //if (data[3*4 + 0]==0 && data[3*4 + 1]==0 && data[3*4 + 2]==0 && data[3*4 + 3]==1) {
         //// https://stackoverflow.com/a/155705
@@ -408,11 +410,11 @@ class Mat4 {
 
 class Ray {
   public:
-    constexpr bool hasNaNs() const { return o.hasNaNs() || d.hasNaNs(); }
+    bool hasNaNs() const { return o.hasNaNs() || d.hasNaNs(); }
 
-    constexpr Ray(const Point &origin, const Direction &direction) : o{origin}, d{direction.normalize()} { assert(!hasNaNs(), "Has NaNs"); }
+    Ray(const Point &origin, const Direction &direction) : o{origin}, d{direction.normalize()} { assert(!hasNaNs(), "Has NaNs"); }
 
-    [[nodiscard]] constexpr Point operator()(Float t) const { return o + d * t; }
+    [[nodiscard]] Point operator()(Float t) const { return o + d * t; }
 
     friend std::ostream &operator <<(std::ostream &os, const Ray &ray) {
       os << "Ray(" << ray.o << ", " << ray.d << ")";
@@ -428,9 +430,9 @@ class Ray {
 
 class Bounds {
   public:
-    constexpr bool hasNaNs() const { return min.hasNaNs() || max.hasNaNs(); }
+    bool hasNaNs() const { return min.hasNaNs() || max.hasNaNs(); }
 
-    constexpr Bounds() {
+    Bounds() {
       Float minNum = std::numeric_limits<Float>::lowest();
       Float maxNum = std::numeric_limits<Float>::max();
 
@@ -440,24 +442,24 @@ class Bounds {
       assert(!hasNaNs(), "Has NaNs");
     }
 
-    constexpr Bounds(const Point &p) : min{p}, max{p} { assert(!hasNaNs(), "Has NaNs"); }
+    Bounds(const Point &p) : min{p}, max{p} { assert(!hasNaNs(), "Has NaNs"); }
 
-    constexpr Bounds(const Point &p0, const Point &p1)
+    Bounds(const Point &p0, const Point &p1)
     : min(std::min(p0.x, p1.x), std::min(p0.y, p1.y), std::min(p0.z, p1.z)),
       max(std::max(p0.x, p1.x), std::max(p0.y, p1.y), std::max(p0.z, p1.z))
     { assert(!hasNaNs(), "Has NaNs"); }
 
-    [[nodiscard]] constexpr Point &operator[](unsigned int i) {
+    [[nodiscard]] Point &operator[](unsigned int i) {
       assert(i == 0 || i == 1, "Bounds subscript must be 0 or 1");
       return (i == 0) ? min : max;
     }
 
-    [[nodiscard]] constexpr Point operator[](unsigned int i) const {
+    [[nodiscard]] Point operator[](unsigned int i) const {
       assert(i == 0 || i == 1, "Bounds subscript must be 0 or 1");
       return (i == 0) ? min : max;
     }
 
-    [[nodiscard]] constexpr Point corner(unsigned int corner) const {
+    [[nodiscard]] Point corner(unsigned int corner) const {
       assert(corner < 8, "Corners go from 0 to 8");
       Float x = (corner & 1) ? max.x : min.x;
       Float y = (corner & 2) ? max.y : min.y;
@@ -465,70 +467,70 @@ class Bounds {
       return Point(x, y, z);
     }
 
-    [[nodiscard]] constexpr Bounds Union(const Point &p) const {
+    [[nodiscard]] Bounds Union(const Point &p) const {
       return Bounds(Point(std::min(min.x, p.x), std::min(min.y, p.y), std::min(min.z, p.z)),
                     Point(std::max(max.x, p.x), std::max(max.y, p.y), std::max(max.z, p.z)));
     }
 
-    [[nodiscard]] constexpr Bounds Union(const Bounds &b) const {
+    [[nodiscard]] Bounds Union(const Bounds &b) const {
       return Bounds(Point(std::min(min.x, b.min.x), std::min(min.y, b.min.y), std::min(min.z, b.min.z)),
                     Point(std::max(max.x, b.max.x), std::max(max.y, b.max.y), std::max(max.z, b.max.z)));
     }
 
-    [[nodiscard]] constexpr Bounds intersection(const Bounds &b) const {
+    [[nodiscard]] Bounds intersection(const Bounds &b) const {
       return Bounds(Point(std::max(min.x, b.min.x), std::max(min.y, b.min.y), std::max(min.z, b.min.z)),
                     Point(std::min(max.x, b.max.x), std::min(max.y, b.max.y), std::min(max.z, b.max.z)));
     }
 
-    [[nodiscard]] constexpr bool overlaps(const Bounds &b) const {
+    [[nodiscard]] bool overlaps(const Bounds &b) const {
       bool x = (max.x >= b.min.x) && (min.x <= b.max.x);
       bool y = (max.y >= b.min.y) && (min.y <= b.max.y);
       bool z = (max.z >= b.min.z) && (min.z <= b.max.z);
       return x && y && z;
     }
 
-    [[nodiscard]] constexpr bool contains(const Point &p) const {
+    [[nodiscard]] bool contains(const Point &p) const {
       return (p.x >= min.x && p.x <= max.x &&
               p.y >= min.y && p.y <= max.y &&
               p.z >= min.z && p.z <= max.z);
     }
 
-    [[nodiscard]] constexpr bool containsExclusive(const Point &p) const {
+    [[nodiscard]] bool containsExclusive(const Point &p) const {
       return (p.x >= min.x && p.x < max.x &&
               p.y >= min.y && p.y < max.y &&
               p.z >= min.z && p.z < max.z);
     }
 
-    [[nodiscard]] constexpr Bounds expand(Float delta) const {
+    [[nodiscard]] Bounds expand(Float delta) const {
       return Bounds(min - Direction(delta, delta, delta), max + Direction(delta, delta, delta));
     }
 
-    [[nodiscard]] constexpr Direction diagonal() const { return max - min; }
+    [[nodiscard]] Direction diagonal() const { return max - min; }
 
-    [[nodiscard]] constexpr Float surfaceArea() const {
+    [[nodiscard]] Float surfaceArea() const {
       Direction d = diagonal();
       return 2 * (d.x * d.y + d.x * d.z + d.y * d.z);
     }
 
-    [[nodiscard]] constexpr Float volume() const {
+    [[nodiscard]] Float volume() const {
       Direction d = diagonal();
       return d.x * d.y * d.z;
     }
 
-    [[nodiscard]] constexpr uint maximumExtent() const {
+    [[nodiscard]] uint maximumExtent() const {
       Direction d = diagonal();
       if (d.x > d.y && d.x > d.z) return 0;
       else if (d.y > d.z)         return 1;
       else                        return 2;
     }
 
-    [[nodiscard]] constexpr Point lerp(const Point &t) const {
+    [[nodiscard]] Point lerp(const Point &t) const {
       return Point(::lerp(t.x, min.x, max.x),
                    ::lerp(t.y, min.y, max.y),
                    ::lerp(t.z, min.z, max.z));
     }
 
-    [[nodiscard]] constexpr Direction offset(const Point &p) const {
+    [[nodiscard]] Direction offset(const Point &p) const {
       Direction o = p - min;
       if (max.x > min.x) o.x /= max.x - min.x;
       if (max.y > min.y) o.y /= max.y - min.y;
@@ -536,7 +538,7 @@ class Bounds {
       return o;
     }
 
-    [[nodiscard]] constexpr bool intersect(const Ray &ray, Float &t0, Float &t1) const {
+    [[nodiscard]] bool intersect(const Ray &ray, Float &t0, Float &t1) const {
       t0 = 0; t1 = std::numeric_limits<Float>::max();
       for (int i = 0; i < 3; i++) {
         Float invRayDir = 1.0 / ray.d[i];
@@ -553,7 +555,7 @@ class Bounds {
       return true;
     }
 
-    [[nodiscard]] constexpr bool intersect(const Ray &ray, const Direction &invDir, const int dirIsNeg[3]) const {
+    [[nodiscard]] bool intersect(const Ray &ray, const Direction &invDir, const int dirIsNeg[3]) const {
       const Float raytMax = std::numeric_limits<Float>::max();
       const Bounds &bounds = *this;
 
