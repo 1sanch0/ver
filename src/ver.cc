@@ -1,7 +1,7 @@
 #include "ver.hh"
 #include "geometry.hh"
 #include "image/io.hh"
-#include "film.hh"
+#include "image/film.hh"
 #include "image/tonemap.hh"
 
 #include "shapes/sphere.hh"
@@ -37,7 +37,7 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION SCULPTURE
+#define VERSION TEAPOT
 #define USE_BVH 1
 // #define DEBUG_BVH 0 && USE_BVH
 

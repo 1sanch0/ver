@@ -1,7 +1,7 @@
 #ifndef CAMERA_H_
 #define CAMERA_H_
 
-#include "film.hh"
+#include "image/film.hh"
 #include "geometry.hh"
 #include "ver.hh"
 
@@ -19,8 +19,8 @@ class Camera {
     virtual void writeDepth(size_t x, size_t y, Float depth) = 0;
 
   public: // Portected
-    Film film;
-    Film nFilm, dFilm; // normal and depth
+    image::Film film;
+    image::Film nFilm, dFilm; // normal and depth
 };
 
 class PinholeCamera : public Camera {
@@ -68,7 +68,7 @@ class PinholeCamera : public Camera {
       assert(color.y >= 0, "y >= 0");
       assert(color.z >= 0, "z >= 0");
 
-      Pixel &px = film[y * film.getHeight() + x];
+      image::Pixel &px = film[y * film.getHeight() + x];
 
       px.r += color.x;
       px.g += color.y;
@@ -79,7 +79,7 @@ class PinholeCamera : public Camera {
       assert(x < film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
-      Pixel &px = nFilm[y * film.getHeight() + x];
+      image::Pixel &px = nFilm[y * film.getHeight() + x];
 
       px.r = std::abs(normal.x);
       px.g = std::abs(normal.y);
@@ -92,7 +92,7 @@ class PinholeCamera : public Camera {
 
       assert(depth > 0, "depth > 0");
 
-      Pixel &px = dFilm[y * film.getHeight() + x];
+      image::Pixel &px = dFilm[y * film.getHeight() + x];
 
       px.r = depth;
       px.g = depth;
