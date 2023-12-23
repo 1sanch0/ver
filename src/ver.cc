@@ -35,7 +35,7 @@
 #define DEFAULT_PT 2
 #define TEAPOT 3
 #define DEFAULT_FINAL 4
-
+#define SCULPTURE 5
 
 #define VERSION DEFAULT_FINAL
 #define USE_BVH 1
@@ -113,7 +113,7 @@ void CornellBox(Scene &scene) {
 
   auto teapotMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
 
-  simply::PLYFile sus("../../teapotN.ply");
+  simply::PLYFile sus("../teapotN.ply");
   auto meshSus = std::make_shared<TriangleMesh>(
     Mat4::rotate(M_PI / -2.0, 1, 0, 0) * Mat4::translation(0, 0, -1) * Mat4::scale(.2, .2, .2),
     sus);
@@ -152,6 +152,30 @@ void CornellBox(Scene &scene) {
   // scene.add(std::make_unique<GeometricPrimitive>(
   //             std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
   //             CBMaterial));
+  #elif VERSION == 5
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterial;
+  auto botMaterial = whiteMaterial;
+
+  auto lucyMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  // auto lucyMaterial = std::make_shared<Slides::Material>(Direction(1,1,1), black, black, white);
+
+  simply::PLYFile sus("../lucy.ply");
+  auto meshSus = std::make_shared<TriangleMesh>(
+    Mat4::translation(-0.5, -0.4, 0) * Mat4::scale(6, 6, 6),
+    // Mat4::identity(),
+    sus);
+
+  std::cout << "TRI: " << meshSus->nTriangles << std::endl;
+  for (size_t i = 0; i < meshSus->nTriangles; i++)
+    scene.add(
+      std::make_unique<GeometricPrimitive>(
+        std::make_shared<Triangle>(meshSus, i),
+        lucyMaterial));
+
   #endif
 
   #if !DEBUG_BVH
@@ -197,68 +221,6 @@ void CornellBox(Scene &scene) {
 
   #endif 
 
-  #if USE_BVH
-  // std::cout << "S': " << scene.scene.size() << std::endl;
-  // std::vector<std::shared_ptr<Primitive>> p(scene.scene.size());
-  // for (int i = 0; i < scene.scene.size(); i++)
-  //   p[i] = std::move(scene.scene[i]);
-  // p.reserve(p.size());
-  // scene.scene = std::vector<std::unique_ptr<Primitive>>();
-  // scene.scene.push_back(std::make_unique<BVH>(std::move(p)));
-  #endif
-  // std::cout << "S: " << scene.scene.size() << std::endl;
-
-  // auto meshFront = Plane(Point(0, 0, -5), Direction(0, 1, 0), Direction(1, 0, 0));
-  // scene.add(std::make_unique<GeometricPrimitive>(
-  //             std::make_shared<Triangle>(meshFront, 0),
-  //             whiteMaterial));
-  // scene.add(std::make_unique<GeometricPrimitive>(
-  //             std::make_shared<Triangle>(meshFront, 1),
-  //             whiteMaterial));
-
-  
-  // simply::PLYFile sus("../teapot.ply");
-  // auto meshSus = std::make_shared<TriangleMesh>(
-  //   Mat4::rotate(M_PI * 1.0/4.0, 1, 0, 0) * Mat4::scale(.2, .2, .2),
-  //   sus);
-
-  // for (size_t i = 0; i < meshSus->nTriangles; i++)
-  //   scene.add(
-  //     std::make_unique<GeometricPrimitive>(
-  //       std::make_shared<Triangle>(meshSus, i),
-  //       pinkMaterial));
-
-
-
-  // std::cout << "S: " << scene.scene.size() << std::endl;
-  // std::vector<std::shared_ptr<Primitive>> p(scene.scene.size());
-  // for (int i = 0; i < scene.scene.size(); i++)
-  //   p[i] = std::move(scene.scene[i]);
-  // p.reserve(p.size());
-  // scene.scene = std::vector<std::unique_ptr<Primitive>>();
-  // std::cout << "S: " << p.size() << std::endl;
-  // scene.scene.push_back(std::make_unique<BVH>(std::move(p)));
-
-
-
-
-
-
-  // TODO: ESTA MIERDA NO FUNCIONA
-  //simply::PLYFile camera("../camera.ply");
-  //auto meshCam = std::make_shared<TriangleMesh>(
-    //Mat4::translation(-2, 0, 0) *
-    //Mat4::scale(0.2, 0.2, 0.2) *
-    ////Mat4::rotate(M_PI / 2, 1, 0, 0) *
-    //Mat4::identity(),
-    //camera);
-
-  //for (size_t i = 0; i < meshCam->nTriangles; i++)
-  //scene.add(std::make_unique<GeometricPrimitive>(
-              //std::make_shared<Triangle>(meshCam, i),
-              //redMaterial));
-
-  // std::cout << "Scene with " << scene.scene.size() << " polygons!" << std::endl;
 }
 
 int main(int argc, char **argv) {

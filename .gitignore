@@ -4,5 +4,6 @@ tmp/
 **/*.o
 *.org
 *.ppm
+*.png
 archive/
 build/
