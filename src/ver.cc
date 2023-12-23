@@ -8,7 +8,7 @@
 #include "shapes/triangle.hh"
 #include "shapes/quad.hh"
 
-#include "io/simply.hh"
+#include "utils/simply.hh"
 
 #include <algorithm>
 #include <vector>
@@ -18,7 +18,7 @@
 
 #include "camera.hh"
 #include "material.hh"
-#include "primitive.hh"
+#include "shapes/primitive.hh"
 #include "lights.hh"
 
 #include "accelerators/bvh.hh"
@@ -37,9 +37,11 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION DEFAULT_FINAL
+#define VERSION SCULPTURE
 #define USE_BVH 1
 // #define DEBUG_BVH 0 && USE_BVH
+
+using namespace utils;
 
 void CornellBox(Scene &scene) {
   // scene.add(LightPoint(Point(0, -0.5, -1), Direction(1, 1, 1)));
@@ -224,7 +226,7 @@ void CornellBox(Scene &scene) {
 }
 
 int main(int argc, char **argv) {
-  utils::ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch");
+  ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch");
 
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})

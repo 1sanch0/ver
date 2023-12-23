@@ -2,7 +2,7 @@
 #define BVH_H_
 
 #include "ver.hh"
-#include "primitive.hh"
+#include "shapes/primitive.hh"
 
 struct BVHPrimitiveInfo {
   BVHPrimitiveInfo() = default;

@@ -86,12 +86,14 @@ namespace image {
     return film;
   }
 
-  void write(const std::string &filename, const Film &film) {
+  void write(const std::string &filename, const Film &film, const std::string &info) {
     std::ofstream file(filename);
     Float max = film.max();
 
     file << "P3" << std::endl;
     file << "# " << filename << std::endl;
+    if (!info.empty())
+      file << "# " << info << std::endl;
     file << "# MAX=" << max << std::endl;
     file << film.getWidth() << " " << film.getHeight() << std::endl;
     file << film.getColorRes() << std::endl;

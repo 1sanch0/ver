@@ -8,7 +8,7 @@
 #include "camera.hh"
 #include "scene.hh"
 #include "material.hh"
-#include "primitive.hh"
+#include "shapes/primitive.hh"
 #include "lights.hh"
 
 typedef Direction Flux; // TODO

@@ -5,7 +5,7 @@
 #include "geometry.hh"
 #include "interaction.hh"
 #include "lights.hh"
-#include "primitive.hh"
+#include "shapes/primitive.hh"
 #include <vector>
 
 #include "spectrum.hh"

@@ -6,7 +6,7 @@
 
 namespace image {
   [[nodiscard]] Film read(const std::string &filename);
-  void write(const std::string &filename, const Film &buffer);
+  void write(const std::string &filename, const Film &buffer, const std::string &info = "");
 } // namespace image
 
 #endif // IO_H_

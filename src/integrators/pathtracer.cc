@@ -1,5 +1,6 @@
 #include "pathtracer.hh"
 #include <chrono>
+#include "geometry.hh"
 #include "../utils/time.hh"
 
 namespace pathtracer {

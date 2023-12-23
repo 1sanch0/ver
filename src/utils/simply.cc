@@ -3,10 +3,11 @@
 #include <fstream>
 #include <algorithm>
 
-#ifndef NDEBUG
-#define ENUM2STR(x) case x: return #x
-#endif
+// #ifndef NDEBUG
+// #define ENUM2STR(x) case x: return #x
+// #endif
 
+namespace utils {
 namespace simply {
   template <typename T>
   static void peek(std::istream &stream, T &data) {
@@ -416,4 +417,5 @@ namespace simply {
     for (size_t i = 0; i < n / 2; i++)
       std::swap(buffer[i], buffer[n - 1 - i]); 
   }
- } // namespace simply
+} // namespace simply
+} // namespace utils

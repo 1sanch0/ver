@@ -2,7 +2,9 @@
 #define TRIANGLE_H_
 
 #include "shape.hh"
-#include "io/simply.hh"
+#include "utils/simply.hh"
+
+using namespace utils;
 
 struct TriangleMesh {
   TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply);
