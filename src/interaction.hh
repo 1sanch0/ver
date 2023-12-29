@@ -10,18 +10,17 @@
 class Interaction {
   // TODO: all the MediumInterface and rays things
   public:
-    Interaction(const Point &point, const Direction &normal, const Direction w_o, Float u, Float v);
+    Interaction(const Point &point, const Direction &normal, const Direction w_o, Float t);
 
   public:
     Point p;
-    Direction wo;
     Direction n;
+    Direction wo;
     Float t;
 };
 
-namespace Slides {
-  class Material;
-}
+class IMaterial; // Forward declaration to avoid circular dependency
+
 struct SurfaceInteraction { // TODO: Temporal
   Point p;
   Direction n;
@@ -32,7 +31,7 @@ struct SurfaceInteraction { // TODO: Temporal
   /* TEST */
   Direction wo;
   Float t;
-  std::shared_ptr<Slides::Material> material;
+  std::shared_ptr<IMaterial> material;
 };
 
 #endif // INTERACTION_H_

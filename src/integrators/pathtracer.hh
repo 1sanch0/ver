@@ -1,7 +1,7 @@
 #ifndef PATHTRACER_H_
 #define PATHTRACER_H_
 
-#include "material.hh"
+#include "materials/slides.hh"
 #include "camera.hh"
 #include "scene.hh"
 

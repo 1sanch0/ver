@@ -16,14 +16,14 @@ class Primitive {
 class GeometricPrimitive : public Primitive {
   public:
     GeometricPrimitive(const std::shared_ptr<Shape> &shape_,
-                       const std::shared_ptr<Slides::Material> &material_);
+                       const std::shared_ptr<IMaterial> &material_);
 
     Bounds bounds() const override;
     bool intersect(const Ray &ray, SurfaceInteraction &interact) const override;
     // std::shared_ptr<Material> material() const override;
   private:
     std::shared_ptr<Shape> shape;
-    std::shared_ptr<Slides::Material> material;
+    std::shared_ptr<IMaterial> material;
 };
 
 #endif // PRIMITIVE_H_

@@ -1,29 +1,7 @@
-#ifndef MATERIAL_H_
-#define MATERIAL_H_
+#ifndef SLIDES_H_
+#define SLIDES_H_
 
-#include "ver.hh"
-#include "geometry.hh"
-#include "spectrum.hh"
-#include "interaction.hh"
-
-enum HemisphereSampler {
-  SOLID_ANGLE, COSINE
-};
-
-class BSDF {
-  public:
-    virtual Spectrum fr(const SurfaceInteraction &si, const Direction &wi) const = 0;
-    virtual Spectrum sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const = 0;
-    virtual Float p(HemisphereSampler sampler, const Direction &wi) const = 0;
-    virtual Float cosThetaI(HemisphereSampler sampler, const Direction &wi, const Direction &n) const = 0;
-};
-
-class IMaterial {
-  public:
-    virtual std::shared_ptr<BSDF> sampleFr() const = 0;
-
-    virtual Spectrum Le() const = 0;
-};
+#include "material.hh"
 
 namespace Slides { // BSDFs & Materials as seen in class (Fall 2023) (Unizar, Graphic IT)
   class DiffuseBRDF : public BSDF {
@@ -92,4 +70,4 @@ namespace Slides { // BSDFs & Materials as seen in class (Fall 2023) (Unizar, Gr
   };
 }
 
-#endif // MATERIAL_H_
+#endif // SLIDES_H_

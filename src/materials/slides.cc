@@ -1,4 +1,4 @@
-#include "material.hh"
+#include "slides.hh"
 
 namespace Slides {
   DiffuseBRDF::DiffuseBRDF(const ::Spectrum &coefficient, Float prob)

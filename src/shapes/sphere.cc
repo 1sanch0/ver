@@ -37,30 +37,10 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   // TODO:remove
   interact.p = ray(tHit);
   interact.t = tHit;
-  interact.wo = (ray.o - ray(tHit)).normalize();
+  interact.wo = (ray.o - interact.p).normalize();
   interact.u = std::atan2(interact.p.y, interact.p.x) / (2 * M_PI) + 0.5; // TODO: REVIEW & IMPROVE
   interact.v = std::acos(interact.p.z / r) / M_PI;
 
-  // TODO: review (esta mal pero buen (hace fatla cambiar de base))
-  // Float azimuth = std::atan2(interact.p.y / r, interact.p.x / r);
-
-  // Float tmp = interact.p.z / r;
-  // Float inclination = std::acos((tmp < 1) ? tmp : 1);
-
-  // Direction longitude = Direction(
-  //     std::cos(azimuth) * std::sin(inclination),
-  //     std::sin(azimuth) * std::sin(inclination),
-  //     std::cos(inclination)
-  //   ).normalize();// TODO (this.planet.basis); // Cambio de base
-
-  // Direction latitude = Direction(
-  //     -std::sin(azimuth) * std::sin(inclination),
-  //     std::cos(azimuth) * std::sin(inclination),
-  //     0
-  //   ).normalize(); //TODO (this.planet.basis); // Cambio de base
-  
-  // interact.du = longitude;
-  // interact.dv = latitude;
   interact.sphere = true;
   
   return true;

@@ -1,7 +1,7 @@
 #include "primitive.hh"
 
 GeometricPrimitive::GeometricPrimitive(const std::shared_ptr<Shape> &shape_,
-                                       const std::shared_ptr<Slides::Material> &material_) 
+                                       const std::shared_ptr<IMaterial> &material_) 
   : shape{shape_}, material{material_} {}
 
 Bounds GeometricPrimitive::bounds() const { return shape->bounds(); }
