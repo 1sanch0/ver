@@ -90,7 +90,7 @@ class PinholeCamera : public Camera {
       assert(x < film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
-      assert(depth > 0, "depth > 0");
+      assert(depth >= 0, "depth < 0");
 
       image::Pixel &px = dFilm[y * film.getHeight() + x];
 

@@ -42,7 +42,7 @@ namespace image {
       void channelAvg(Float &r, Float &g, Float &b);
       void luminanceStats(Float &avg, Float &min, Float &max);
 
-    private:
+    public: //private:
       Framebuffer buffer;
       size_t color_resolution;
   };

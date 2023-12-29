@@ -37,7 +37,7 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION TEAPOT
+#define VERSION DEFAULT_PT
 #define USE_BVH 1
 // #define DEBUG_BVH 0 && USE_BVH
 
@@ -225,6 +225,101 @@ void CornellBox(Scene &scene) {
 
 }
 
+Scene EnvMapTest(std::unique_ptr<Texture> env = nullptr) {
+  Scene scene(std::move(env));
+
+  const auto none = Direction(0, 0, 0);
+  const auto white = Direction(.9, .9, .9);
+
+  const auto refractMaterial = std::make_shared<Slides::Material>(none, none, white, none);
+  // const auto refractMaterial = std::make_shared<Slides::Material>(none, white, none, none);
+  // const auto refractMaterial = std::make_shared<Slides::Material>(white, none, none, none);
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+            std::make_shared<Sphere>(Point(0.0, 0.0, 0.0), 0.3),
+            refractMaterial));
+
+  return scene;
+}
+
+Scene Bunny(bool pointLight = true, bool areaLight = true) {
+  Scene scene;
+
+  const auto none = Direction(0, 0, 0);
+  const auto white = Direction(.9, .9, .9);
+  const auto red   = Direction(.9, .2, .2);
+  const auto green = Direction(.2, .9, .2);
+  const auto pink = Direction(0.8941, 0.66667, 0.9);
+
+  auto pinkMaterial = std::make_shared<Slides::Material>(pink, none, none, none);
+  auto whiteMaterial = std::make_shared<Slides::Material>(white, none, none, none);
+  auto redMaterial = std::make_shared<Slides::Material>(red, none, none, none);
+  auto greenMaterial = std::make_shared<Slides::Material>(green, none, none, none);
+  auto emmMaterial = std::make_shared<Slides::Material>(white, none, none, white);
+
+  if (pointLight)
+    scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+
+  // auto bunnyMaterial = std::make_shared<Slides::Material>(none, white, none, none);
+  auto bunnyMaterial = pinkMaterial;
+
+  simply::PLYFile bunny("../bunny.ply");
+  auto meshBunny = std::make_shared<TriangleMesh>(
+    Mat4::translation(0, -0.6230, 0) * Mat4::scale(6, 6, 6),
+    bunny);
+  
+  for (size_t i = 0; i < meshBunny->nTriangles; i++)
+    scene.add(
+      std::make_unique<GeometricPrimitive>(
+        std::make_shared<Triangle>(meshBunny, i),
+        bunnyMaterial));
+  
+
+  auto meshLeft = Quad(Point(-1, -0.7, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshLeft, 0),
+              greenMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshLeft, 1),
+              greenMaterial));
+
+  auto meshRight = Quad(Point(1, -0.7, 0), Direction(0, 1, 0), Direction(0, 0, 1), (Direction(-1, 0, 0)));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshRight, 0),
+              redMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshRight, 1),
+              redMaterial));
+
+  auto meshBack = Quad(Point(0, 0, 1), Direction(0, 10, 0), Direction(10, 0, 0), Direction(0, 0, -1));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBack, 0),
+              whiteMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBack, 1),
+              whiteMaterial));
+
+  auto meshBot = Quad(Point(0, -1, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 0),
+              whiteMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 1),
+              whiteMaterial));
+
+  if (areaLight) {
+    auto meshTop = Quad(Point(0, 0.4, 0), Direction(100, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshTop, 0),
+                emmMaterial));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshTop, 1),
+                emmMaterial));
+  }
+  
+  return scene;
+}
+
 int main(int argc, char **argv) {
   ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch");
 
@@ -326,13 +421,21 @@ int main(int argc, char **argv) {
   bool useBVH = args["--bvh"][0] == "true";
 
   Scene cornellBoxScene;
-  CornellBox(cornellBoxScene);
+  // CornellBox(cornellBoxScene);
+  // cornellBoxScene = Bunny();
+  image::Film foo = image::read("../envmap.ppm");
+  auto tex = std::make_unique<PPMTexture>(foo.buffer);
+  auto tex2 = std::make_unique<ConstantTexture>(Spectrum(1, 1, 0));
+  cornellBoxScene = EnvMapTest(std::move(tex));
   if (useBVH)
     cornellBoxScene.makeBVH();
 
-  Point O(0, 0, -3.5);
+  Point O(0.0, 0.0, -3.5);
   Direction left(-1, 0, 0), up(0, 1, 0), forward(0, 0, 3);
   PinholeCamera cam(width, height, O, left, up, forward);
+  // Point O(0.03, 0.0, -3.5);
+  // Direction left(-1, 0, 0), up(0, 1, 0), forward(0, -1, 6.6);
+  // PinholeCamera cam(width, height, O, left, left.cross(forward).normalize(), forward);
 
   // if (camera == "orthographic")
   //   cam = OrthographicCamera(width, height, O, left, up, forward);

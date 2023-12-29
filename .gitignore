@@ -5,5 +5,7 @@ tmp/
 *.org
 *.ppm
 *.png
+*.jpg
+*.jpeg
 archive/
 build/

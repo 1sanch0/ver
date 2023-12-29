@@ -44,6 +44,8 @@ namespace image {
     public:
       Framebuffer(size_t width, size_t height);
 
+      Pixel get(size_t i, size_t j) const;
+
       Pixel& operator [](size_t idx);
       [[nodiscard]] Pixel operator [](size_t idx) const;
 

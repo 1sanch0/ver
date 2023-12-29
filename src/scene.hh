@@ -12,9 +12,35 @@
 
 #include "accelerators/bvh.hh"
 
+#include "texture.hh"
+
+class EnvironmentMap { // TODO: Review
+  public:
+    explicit EnvironmentMap(std::unique_ptr<Texture> texture_) : texture(std::move(texture_)) {}
+
+    Spectrum value(const Ray &r) const {
+      if (texture == nullptr) return Spectrum();
+
+      SurfaceInteraction interact;
+      float m =  2.0 * std::sqrt(r.d.x*r.d.x + r.d.y*r.d.y + (r.d.z + 1.0)*(r.d.z + 1.0));
+      interact.u = r.d.x / m + 0.5;
+      interact.v =  1.0 - (r.d.y / m + 0.5);
+      // const Float theta = std::acos(r.d.z);
+      // const Float phi = std::atan2(r.d.y, r.d.x);
+      // interact.u = phi / (2 * M_PI);
+      // interact.v = theta / M_PI;
+
+      return texture->value(interact);
+    }
+
+  private:
+    std::unique_ptr<Texture> texture;
+};
+
 class Scene {
   public:
-    Scene() = default;
+    Scene() : scene{}, lights{}, envMap(nullptr) {}
+    explicit Scene(std::unique_ptr<Texture> env): scene{}, lights{}, envMap(std::move(env)) {}
 
     bool intersect(const Ray &r, SurfaceInteraction &interact) const {
       SurfaceInteraction surfInt, tmpSurfInt;
@@ -74,9 +100,14 @@ class Scene {
       scene.push_back(std::make_unique<BVH>(std::move(p)));
     }
 
+    Spectrum envMapValue(const Ray &r) const {
+      return envMap.value(r);
+    }
+
   public:
     std::vector<std::unique_ptr<Primitive>> scene;
     std::vector<LightPoint> lights;
+    EnvironmentMap envMap;
 };
 
 #endif // SCENE_H_

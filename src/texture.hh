@@ -4,6 +4,7 @@
 #include "ver.hh"
 #include "spectrum.hh"
 #include "interaction.hh"
+#include "image/framebuffer.hh"
 
 class Texture {
   public:
@@ -22,8 +23,12 @@ class ConstantTexture : public Texture {
 
 class PPMTexture : public Texture {
   public:
-    // TODO
+    PPMTexture(const image::Framebuffer &fb);
+
+    Spectrum value(const SurfaceInteraction &interact) const override;
+
   private:
+    image::Framebuffer fb;
 };
 
 #endif // TEXTURE_H_

@@ -10,25 +10,25 @@ namespace pathtracer {
     SurfaceInteraction interact;
 
     if (depth == 0) return Spectrum();
-    if (!scene.intersect(r, interact)) return Spectrum();
+    if (!scene.intersect(r, interact)) return scene.envMapValue(r); // return Spectrum();
 
     const Point x = interact.p;
     const Direction n = interact.n;
 
-    const auto brdf = interact.material->sampleFr();
-    if (brdf == nullptr) return Spectrum(); // Absorption
-
     const Spectrum Le = interact.material->Le();
     if (Le.max() != 0) return Le; // Material emits
 
+    const auto brdf = interact.material->sampleFr();
+    if (brdf == nullptr) return Spectrum(); // Absorption
+
     Direction wi;
-    const Spectrum L = brdf->sampleFr(sampler, interact, wi);
+    const Spectrum Fr = brdf->sampleFr(sampler, interact, wi);
     const Float cosThetaI = brdf->cosThetaI(sampler, wi, n);
     const Float p = brdf->p(sampler, wi);
 
-    const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi) * M_PI; // * std::abs(wi.dot(n)); // TODO: ASK
+    const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi) * M_PI; // * std::abs(wi.dot(n)); // TODO: ASK * prob rr
 
-    return Lp + L * Li(Ray(x + wi * eps, wi), scene, depth - 1, sampler) * cosThetaI / p;
+    return Lp + Li(Ray(x + wi * eps, wi), scene, depth - 1, sampler) * Fr * cosThetaI / p;
   }
 
   void render(Camera &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
@@ -43,6 +43,9 @@ namespace pathtracer {
     for (size_t i = 0; i < width; i++) {
       for (size_t j = 0; j < height; j++) {
         SurfaceInteraction si;
+        si.t = 0;
+        si.n = Direction(0, 0, 0);
+
         Direction L;
         for (size_t s = 0; s < spp; s++) {
           Ray r = camera.getRay(i, j);

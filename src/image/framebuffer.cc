@@ -63,6 +63,12 @@ namespace image {
     assert(height > 0, "Height must be greater than 0");
   }
 
+  Pixel Framebuffer::get(size_t i, size_t j) const {
+    assert(i < cols, "Index out of bounds for framebuffer");
+    assert(j < rows, "Index out of bounds for framebuffer");
+    return buffer[i + j * cols];
+  }
+
   Pixel& Framebuffer::operator [](size_t idx) {
     assert(idx < rows * cols, "Index out of bounds for framebuffer");
     return buffer[idx];
