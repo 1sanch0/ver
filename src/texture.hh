@@ -31,4 +31,19 @@ class PPMTexture : public Texture {
     image::Framebuffer fb;
 };
 
+class NoiseTexture : public Texture {
+  public:
+    NoiseTexture(Float scale_, Float roughness_,
+                 Float scale_u = 1.0, Float scale_v = 1.0,
+                 const Spectrum &low_ = Spectrum(0, 0, 0),
+                 const Spectrum &high_ = Spectrum(1, 1, 1));
+
+    Spectrum value(const SurfaceInteraction &interact) const override;
+
+  private:
+    Float scale, roughness;
+    Float scaleU, scaleV;
+    Spectrum low, high;
+};
+
 #endif // TEXTURE_H_

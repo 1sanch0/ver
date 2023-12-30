@@ -1,327 +1,21 @@
 #include "ver.hh"
 #include "geometry.hh"
+
 #include "image/io.hh"
 #include "image/film.hh"
 #include "image/tonemap.hh"
 
-#include "shapes/sphere.hh"
-#include "shapes/triangle.hh"
-#include "shapes/quad.hh"
-
-#include "utils/simply.hh"
-
-#include <algorithm>
-#include <vector>
-#include <initializer_list>
-
-#include <chrono>
-
-#include "camera.hh"
-#include "materials/slides.hh"
-#include "shapes/primitive.hh"
-#include "lights.hh"
-
-#include "accelerators/bvh.hh"
-#include "scene.hh"
-
-// #include "integrators/raytracer.hh"
 #include "integrators/pathtracer.hh"
 #include "integrators/photonmapper.hh"
 
 #include "utils/argparse.hh"
 
-#define WALLS_H 0
-#define WALLS_V_BALLS 1
-#define DEFAULT_PT 2
-#define TEAPOT 3
-#define DEFAULT_FINAL 4
-#define SCULPTURE 5
-
-#define VERSION DEFAULT_PT
-#define USE_BVH 1
-// #define DEBUG_BVH 0 && USE_BVH
+#include "scenes.hh"
 
 using namespace utils;
 
-void CornellBox(Scene &scene) {
-  // scene.add(LightPoint(Point(0, -0.5, -1), Direction(1, 1, 1)));
-
-  auto white = Direction(.9, .9, .9);
-  auto whiteL= Direction(1, 1, 1);
-  auto red   = Direction(.9, 0, 0);
-  auto green = Direction(0, .9, 0);
-  auto black = Direction(0, 0, 0);
-  auto pink = Direction(0.8941, 0.66667, 0.9);
-  auto light_blue = Direction(0.5529, 1, 1);
-
-  auto whiteMaterial = std::make_shared<Slides::Material>(white, black, black, black);
-  auto whiteMaterialE = std::make_shared<Slides::Material>(white, black, black, whiteL);
-  auto whiteMaterialReflect = std::make_shared<Slides::Material>(black, white, black, black);
-  auto redMaterial = std::make_shared<Slides::Material>(red, black, black, black);
-  auto greenMaterial = std::make_shared<Slides::Material>(green, black, black, black);
-
-  auto pinkMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
-
-  #if VERSION == 0
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-  auto leftMaterial = redMaterial;
-  auto rightMaterial = greenMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = whiteMaterial;
-  auto botMaterial = whiteMaterial;
-
-  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-  #elif VERSION == 1
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-  auto leftMaterial = whiteMaterial;
-  auto rightMaterial = whiteMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = redMaterial;
-  auto botMaterial = greenMaterial;
-
-  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
-              LBMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
-              RBMaterial));
-  #elif VERSION == 2
-  auto leftMaterial = redMaterial;
-  auto rightMaterial = greenMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = whiteMaterialE;
-  auto botMaterial = whiteMaterial;
-
-  auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
-
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
-              LBMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
-              RBMaterial));
-  #elif VERSION == 3
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-  auto leftMaterial = redMaterial;
-  auto rightMaterial = greenMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = whiteMaterial;
-  auto botMaterial = whiteMaterial;
-
-  auto teapotMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-
-  simply::PLYFile sus("../teapotN.ply");
-  auto meshSus = std::make_shared<TriangleMesh>(
-    Mat4::rotate(M_PI / -2.0, 1, 0, 0) * Mat4::translation(0, 0, -1) * Mat4::scale(.2, .2, .2),
-    sus);
-
-
-  for (size_t i = 0; i < meshSus->nTriangles; i++)
-    scene.add(
-      std::make_unique<GeometricPrimitive>(
-        std::make_shared<Triangle>(meshSus, i),
-        teapotMaterial));
-
-  #elif VERSION == 4 
-  // Focus
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-  auto leftMaterial = redMaterial;
-  auto rightMaterial = greenMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = whiteMaterial;
-  auto botMaterial = whiteMaterial;
-
-  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-  // auto RBMaterial = std::make_shared<Slides::Material>(black, Direction(1,1,1), black, black);
-
-  // auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
-  // auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
-  // auto RBMaterial = std::make_shared<Slides::Material>(black, black, white, black);
-
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
-              LBMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
-              RBMaterial));
-
-  // scene.add(std::make_unique<GeometricPrimitive>(
-  //             std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
-  //             CBMaterial));
-  #elif VERSION == 5
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-  auto leftMaterial = redMaterial;
-  auto rightMaterial = greenMaterial;
-  auto backMaterial = whiteMaterial;
-  auto topMaterial = whiteMaterial;
-  auto botMaterial = whiteMaterial;
-
-  auto lucyMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-  // auto lucyMaterial = std::make_shared<Slides::Material>(Direction(1,1,1), black, black, white);
-
-  simply::PLYFile sus("../lucy.ply");
-  auto meshSus = std::make_shared<TriangleMesh>(
-    Mat4::translation(-0.5, -0.4, 0) * Mat4::scale(6, 6, 6),
-    // Mat4::identity(),
-    sus);
-
-  std::cout << "TRI: " << meshSus->nTriangles << std::endl;
-  for (size_t i = 0; i < meshSus->nTriangles; i++)
-    scene.add(
-      std::make_unique<GeometricPrimitive>(
-        std::make_shared<Triangle>(meshSus, i),
-        lucyMaterial));
-
-  #endif
-
-  #if !DEBUG_BVH
-  auto meshLeft = Quad(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshLeft, 0),
-              leftMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshLeft, 1),
-              leftMaterial));
-
-  auto meshRight = Quad(Point(1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), (Direction(-1, 0, 0)));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshRight, 0),
-              rightMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshRight, 1),
-              rightMaterial));
-
-  auto meshBack = Quad(Point(0, 0, 1), Direction(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, -1));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBack, 0),
-              backMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBack, 1),
-              backMaterial));
-
-  auto meshTop = Quad(Point(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshTop, 0),
-              topMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshTop, 1),
-              topMaterial));
-
-  auto meshBot = Quad(Point(0, -1, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBot, 0),
-              botMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBot, 1),
-              botMaterial));
-
-  #endif 
-
-}
-
-Scene EnvMapTest(std::unique_ptr<Texture> env = nullptr) {
-  Scene scene(std::move(env));
-
-  const auto none = Direction(0, 0, 0);
-  const auto white = Direction(.9, .9, .9);
-
-  const auto refractMaterial = std::make_shared<Slides::Material>(none, none, white, none);
-  // const auto refractMaterial = std::make_shared<Slides::Material>(none, white, none, none);
-  // const auto refractMaterial = std::make_shared<Slides::Material>(white, none, none, none);
-
-  scene.add(std::make_unique<GeometricPrimitive>(
-            std::make_shared<Sphere>(Point(0.0, 0.0, 0.0), 0.3),
-            refractMaterial));
-
-  return scene;
-}
-
-Scene Bunny(bool pointLight = true, bool areaLight = true) {
-  Scene scene;
-
-  const auto none = Direction(0, 0, 0);
-  const auto white = Direction(.9, .9, .9);
-  const auto red   = Direction(.9, .2, .2);
-  const auto green = Direction(.2, .9, .2);
-  const auto pink = Direction(0.8941, 0.66667, 0.9);
-
-  auto pinkMaterial = std::make_shared<Slides::Material>(pink, none, none, none);
-  auto whiteMaterial = std::make_shared<Slides::Material>(white, none, none, none);
-  auto redMaterial = std::make_shared<Slides::Material>(red, none, none, none);
-  auto greenMaterial = std::make_shared<Slides::Material>(green, none, none, none);
-  auto emmMaterial = std::make_shared<Slides::Material>(white, none, none, white);
-
-  if (pointLight)
-    scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
-
-  // auto bunnyMaterial = std::make_shared<Slides::Material>(none, white, none, none);
-  auto bunnyMaterial = pinkMaterial;
-
-  simply::PLYFile bunny("../bunny.ply");
-  auto meshBunny = std::make_shared<TriangleMesh>(
-    Mat4::translation(0, -0.6230, 0) * Mat4::scale(6, 6, 6),
-    bunny);
-  
-  for (size_t i = 0; i < meshBunny->nTriangles; i++)
-    scene.add(
-      std::make_unique<GeometricPrimitive>(
-        std::make_shared<Triangle>(meshBunny, i),
-        bunnyMaterial));
-  
-
-  auto meshLeft = Quad(Point(-1, -0.7, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshLeft, 0),
-              greenMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshLeft, 1),
-              greenMaterial));
-
-  auto meshRight = Quad(Point(1, -0.7, 0), Direction(0, 1, 0), Direction(0, 0, 1), (Direction(-1, 0, 0)));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshRight, 0),
-              redMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshRight, 1),
-              redMaterial));
-
-  auto meshBack = Quad(Point(0, 0, 1), Direction(0, 10, 0), Direction(10, 0, 0), Direction(0, 0, -1));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBack, 0),
-              whiteMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBack, 1),
-              whiteMaterial));
-
-  auto meshBot = Quad(Point(0, -1, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBot, 0),
-              whiteMaterial));
-  scene.add(std::make_unique<GeometricPrimitive>(
-              std::make_shared<Triangle>(meshBot, 1),
-              whiteMaterial));
-
-  if (areaLight) {
-    auto meshTop = Quad(Point(0, 0.4, 0), Direction(100, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
-    scene.add(std::make_unique<GeometricPrimitive>(
-                std::make_shared<Triangle>(meshTop, 0),
-                emmMaterial));
-    scene.add(std::make_unique<GeometricPrimitive>(
-                std::make_shared<Triangle>(meshTop, 1),
-                emmMaterial));
-  }
-  
-  return scene;
-}
-
 int main(int argc, char **argv) {
-  ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch");
+  ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch (with tonemappers)");
 
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})
@@ -420,54 +114,62 @@ int main(int argc, char **argv) {
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
-  Scene cornellBoxScene;
-  // CornellBox(cornellBoxScene);
-  // cornellBoxScene = Bunny();
-  image::Film foo = image::read("../envmap.ppm");
-  auto tex = std::make_unique<PPMTexture>(foo.buffer);
-  auto tex2 = std::make_unique<ConstantTexture>(Spectrum(1, 1, 0));
-  cornellBoxScene = EnvMapTest(std::move(tex));
-  if (useBVH)
-    cornellBoxScene.makeBVH();
+  Scene scene = CornellBox(width, height);
 
-  Point O(0.0, 0.0, -3.5);
-  Direction left(-1, 0, 0), up(0, 1, 0), forward(0, 0, 3);
-  PinholeCamera cam(width, height, O, left, up, forward);
+  if (useBVH)
+    scene.makeBVH();
+
   // Point O(0.03, 0.0, -3.5);
   // Direction left(-1, 0, 0), up(0, 1, 0), forward(0, -1, 6.6);
   // PinholeCamera cam(width, height, O, left, left.cross(forward).normalize(), forward);
+
+  // Point O(0.0, 0.0, 3.5);
+  // Direction left(1, 0, 0), up(0, 1, 0), forward(0, 0, -3);
+  // PinholeCamera cam(width, height, O, left, up, forward);
+
+  // Point O(-0.3, 0.4, 0.5);
+  // // Direction left(-1, 0, 0), up(0, 1, 0), forward(0, -1, 6.6);
+  // // get left, up, and forward from O and lookAt
+  // Direction forward = (Point(0, 0.15, 0) - O).normalize() * 3;
+  // Direction left = forward.cross(Direction(0, 1, 0)).normalize();
+  // Direction up = left.cross(forward).normalize();
+  // PinholeCamera cam(width, height, O, left, up, forward);
 
   // if (camera == "orthographic")
   //   cam = OrthographicCamera(width, height, O, left, up, forward);
 
   if (integrator == "pathtracer")
-    pathtracer::render(cam, cornellBoxScene, spp, maxDepth, sampler);
-  else if (integrator == "photonmapper")
-    photonmapper::render(cam, cornellBoxScene, 101/*TODO*/);
+    pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
+  // else if (integrator == "photonmapper")
+  //   photonmapper::render(scene.camera, scene, 101/*TODO*/);
+
+  auto &colorFilm = scene.camera->film;
+  auto &normalFilm = scene.camera->nFilm;
+  auto &depthFilm = scene.camera->dFilm;
   
   if (saveHDR) {
-    image::write("hdr_" + filename, cam.film);
+    image::write("hdr_" + filename, colorFilm);
   } else {
     if (tonemap == "gamma")
-      image::tonemap::Gamma(2.2, cam.film.max()).applyTo(cam.film);
+      image::tonemap::Gamma(2.2, colorFilm.max()).applyTo(colorFilm);
     else if (tonemap == "reinhard2002")
-      image::tonemap::Reinhard2002().applyTo(cam.film);
+      image::tonemap::Reinhard2002().applyTo(colorFilm);
     else if (tonemap == "reinhard2005")
-      image::tonemap::Reinhard2005().applyTo(cam.film);
+      image::tonemap::Reinhard2005().applyTo(colorFilm);
     else
-      assert(false, "Unknown tonemap");
+      throw std::runtime_error("Unknown tonemap");
 
-    image::write(filename, cam.film);
+    image::write(filename, colorFilm);
   }
 
   if (saveNormals) {
-    image::tonemap::Reinhard2002().applyTo(cam.nFilm);
-    image::write("normals_" + filename, cam.nFilm);
+    image::tonemap::Reinhard2002().applyTo(normalFilm);
+    image::write("normals_" + filename, normalFilm);
   }
 
   if (saveDepth) {
-    image::tonemap::Reinhard2002().applyTo(cam.dFilm);
-    image::write("depth_" + filename, cam.dFilm);
+    image::tonemap::Reinhard2002().applyTo(depthFilm);
+    image::write("depth_" + filename, depthFilm);
   }
 
   return 0;

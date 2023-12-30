@@ -1,4 +1,5 @@
 #include "primitive.hh"
+#include "materials/material.hh"
 
 GeometricPrimitive::GeometricPrimitive(const std::shared_ptr<Shape> &shape_,
                                        const std::shared_ptr<IMaterial> &material_) 
@@ -11,5 +12,6 @@ bool GeometricPrimitive::intersect(const Ray &ray, SurfaceInteraction &interact)
   if (!shape->intersect(ray, tHit, interact)) return false;
 
   interact.material = material;
+  // TODO: change normals if normal map in material
   return true;
 }

@@ -51,7 +51,7 @@ namespace Slides { // BSDFs & Materials as seen in class (Fall 2023) (Unizar, Gr
       Material(const ::Spectrum &kd, const ::Spectrum &ks, const ::Spectrum &kt, const ::Spectrum &ke,
               Float eta_ = 1.0);
 
-      std::shared_ptr<BSDF> sampleFr() const override;
+      std::shared_ptr<BSDF> sampleFr(const SurfaceInteraction &si) const override;
 
       Spectrum Le() const override;
 

@@ -18,7 +18,7 @@ namespace pathtracer {
     const Spectrum Le = interact.material->Le();
     if (Le.max() != 0) return Le; // Material emits
 
-    const auto brdf = interact.material->sampleFr();
+    const auto brdf = interact.material->sampleFr(interact);
     if (brdf == nullptr) return Spectrum(); // Absorption
 
     Direction wi;
@@ -31,9 +31,9 @@ namespace pathtracer {
     return Lp + Li(Ray(x + wi * eps, wi), scene, depth - 1, sampler) * Fr * cosThetaI / p;
   }
 
-  void render(Camera &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
-    const size_t width = camera.film.getWidth();
-    const size_t height = camera.film.getHeight();
+  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
+    const size_t width = camera->film.getWidth();
+    const size_t height = camera->film.getHeight();
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -48,7 +48,7 @@ namespace pathtracer {
 
         Direction L;
         for (size_t s = 0; s < spp; s++) {
-          Ray r = camera.getRay(i, j);
+          Ray r = camera->getRay(i, j);
 
           scene.intersect(r, si);
           L += Li(r, scene, maxDepth, sampler);
@@ -60,12 +60,12 @@ namespace pathtracer {
         }
         L /= spp;
 
-        camera.writeColor(i, j, L);
+        camera->writeColor(i, j, L);
         // si.n.x = (si.n.x < 0) ? 0 : si.n.x;
         // si.n.y = (si.n.y < 0) ? 0 : si.n.y;
         // si.n.z = (si.n.z < 0) ? 0 : si.n.z;
-        camera.writeNormal(i, j, si.n);
-        camera.writeDepth(i, j, si.t);
+        camera->writeNormal(i, j, si.n);
+        camera->writeDepth(i, j, si.t);
 
         #pragma omp critical
         {

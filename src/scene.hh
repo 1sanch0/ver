@@ -16,13 +16,13 @@
 
 class EnvironmentMap { // TODO: Review
   public:
-    explicit EnvironmentMap(std::unique_ptr<Texture> texture_) : texture(std::move(texture_)) {}
+    explicit EnvironmentMap(std::shared_ptr<Texture> texture_) : texture(texture_) {}
 
     Spectrum value(const Ray &r) const {
       if (texture == nullptr) return Spectrum();
 
       SurfaceInteraction interact;
-      float m =  2.0 * std::sqrt(r.d.x*r.d.x + r.d.y*r.d.y + (r.d.z + 1.0)*(r.d.z + 1.0));
+      Float m = 2.0 * std::sqrt(r.d.x*r.d.x + r.d.y*r.d.y + (r.d.z + 1.0)*(r.d.z + 1.0));
       interact.u = r.d.x / m + 0.5;
       interact.v =  1.0 - (r.d.y / m + 0.5);
       // const Float theta = std::acos(r.d.z);
@@ -34,13 +34,12 @@ class EnvironmentMap { // TODO: Review
     }
 
   private:
-    std::unique_ptr<Texture> texture;
+    std::shared_ptr<Texture> texture;
 };
 
 class Scene {
   public:
-    Scene() : scene{}, lights{}, envMap(nullptr) {}
-    explicit Scene(std::unique_ptr<Texture> env): scene{}, lights{}, envMap(std::move(env)) {}
+    Scene() : scene{}, lights{}, envMap(nullptr), camera{nullptr} {};
 
     bool intersect(const Ray &r, SurfaceInteraction &interact) const {
       SurfaceInteraction surfInt, tmpSurfInt;
@@ -89,6 +88,9 @@ class Scene {
     void add(std::unique_ptr<Primitive> primitive) { scene.push_back(std::move(primitive)); }
     void add(const LightPoint &light) { lights.push_back(light); }
 
+    void set(const std::shared_ptr<Texture> &env) { envMap = EnvironmentMap(env); }
+    void set(const std::shared_ptr<Camera> &cam) { camera = cam; }
+
     void makeBVH() {
       std::vector<std::shared_ptr<Primitive>> p(scene.size());
 
@@ -108,6 +110,7 @@ class Scene {
     std::vector<std::unique_ptr<Primitive>> scene;
     std::vector<LightPoint> lights;
     EnvironmentMap envMap;
+    std::shared_ptr<Camera> camera;
 };
 
 #endif // SCENE_H_

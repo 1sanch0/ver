@@ -20,7 +20,7 @@ class BSDF {
 
 class IMaterial {
   public:
-    virtual std::shared_ptr<BSDF> sampleFr() const = 0;
+    virtual std::shared_ptr<BSDF> sampleFr(const SurfaceInteraction &si) const = 0;
 
     virtual Spectrum Le() const = 0;
 };
