@@ -14,6 +14,8 @@
 
 using namespace utils;
 
+void merge(const std::unordered_map<std::string, std::vector<std::string>> &args);
+
 int main(int argc, char **argv) {
   ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch (with tonemappers)");
 
@@ -45,17 +47,9 @@ int main(int argc, char **argv) {
     .choices({"gamma", "reinhard2002", "reinhard2005"})
     .default_value("gamma");
   
-  /*
-  TODO: tonemap parameters
-  
   parser.addArgument("-g", "Gamma value")
     .default_value("2.2");
-  */
   
-  parser.addArgument("-c", "Camera to use")
-    .choices({"pinhole", "orthographic"})
-    .default_value("pinhole");
-
   parser.addArgument("--sampler", "Hemisphere sampling method")
     .choices({"solid_angle", "cosine"})
     .default_value("cosine");
@@ -79,10 +73,7 @@ int main(int argc, char **argv) {
   const auto &merge_files = args["--merge"];
 
   if (merge_files.size() > 0) {
-    // Merge HDR files to a single one and exit
-
-    // TODO: should be fun tho :)
-
+    merge(args);
     exit(0);
   }
 
@@ -108,7 +99,7 @@ int main(int argc, char **argv) {
   bool saveNormals = args["--normals"][0] == "true";
   bool saveDepth = args["--depth"][0] == "true";
   std::string tonemap = args["-t"][0];
-  std::string camera = args["-c"][0];
+  Float gamma = std::stof(args["-g"][0]);
   HemisphereSampler sampler = (args["--sampler"][0] == "solid_angle") ? SOLID_ANGLE : COSINE;
   std::string filename = args["-f"][0];
   bool saveHDR = args["--hdr"][0] == "true";
@@ -151,7 +142,7 @@ int main(int argc, char **argv) {
     image::write("hdr_" + filename, colorFilm);
   } else {
     if (tonemap == "gamma")
-      image::tonemap::Gamma(2.2, colorFilm.max()).applyTo(colorFilm);
+      image::tonemap::Gamma(gamma, colorFilm.max()).applyTo(colorFilm);
     else if (tonemap == "reinhard2002")
       image::tonemap::Reinhard2002().applyTo(colorFilm);
     else if (tonemap == "reinhard2005")
@@ -173,4 +164,40 @@ int main(int argc, char **argv) {
   }
 
   return 0;
+}
+
+// TODO: TEST
+void merge(const std::unordered_map<std::string, std::vector<std::string>> &args) {
+  const auto &files = args.at("--merge");
+  const std::string filename = args.at("-f")[0];
+  const std::string tonemap = args.at("-t")[0];
+  const Float gamma = std::stof(args.at("-g")[0]);
+
+  image::Film out = image::read(files[0]);
+  const size_t width = out.getWidth();
+  const size_t height = out.getHeight();
+  const size_t colorRes = out.getColorRes();
+
+  for (size_t i = 1; i < files.size(); i++) {
+    image::Film file = image::read(files[0]);
+    const size_t w = file.getWidth();
+    const size_t h = file.getHeight();
+    const size_t c = file.getColorRes();
+
+    if (w != width || h != height || c != colorRes)
+      throw std::runtime_error("Images must have the same dimensions and color resolution");
+
+    out.buffer += file.buffer;
+  }
+
+  out.buffer /= static_cast<Float>(files.size());
+
+  if (tonemap == "gamma")
+    image::tonemap::Gamma(gamma, out.max()).applyTo(out);
+  else if (tonemap == "reinhard2002")
+    image::tonemap::Reinhard2002().applyTo(out);
+  else if (tonemap == "reinhard2005")
+    image::tonemap::Reinhard2005().applyTo(out);
+  else
+    throw std::runtime_error("Unknown tonemap");
 }

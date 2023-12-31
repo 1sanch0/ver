@@ -106,6 +106,15 @@ namespace image {
     return result;
   }
 
+  Framebuffer& Framebuffer::operator /=(Float scalar) {
+    assert(!std::isnan(scalar), "Cannot divide by NaN");
+    assert(!std::isinf(scalar), "Cannot divide by infinity");
+    assert(scalar > 0.0, "Pixels cannot be divided by negative number or 0");
+    for (size_t i = 0; i < rows * cols; i++)
+      (*this)[i] /= scalar;
+    return *this;
+  }
+
   size_t Framebuffer::getWidth() const { return cols; }
   size_t Framebuffer::getHeight() const { return rows; }
 }
