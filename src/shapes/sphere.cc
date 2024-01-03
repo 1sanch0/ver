@@ -39,9 +39,17 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   interact.t = tHit;
   interact.wo = (ray.o - interact.p).normalize();
 
-  Float m = 2.0 * std::sqrt(interact.n.x*interact.n.x + interact.n.y*interact.n.y + (interact.n.z + 1.0)*(interact.n.z + 1.0));
-  interact.u = interact.n.x / m + 0.5;
-  interact.v =  1.0 - (interact.n.y / m + 0.5);
+  const Direction v = interact.n;
+  Float theta = std::acos(clamp(v.z, -1, 1));
+  Float phi = std::atan2(v.y, v.x);
+  phi = (phi < 0) ? phi + 2 * M_PI : phi;
+
+  interact.u = theta * M_1_PI;
+  interact.v = phi * M_1_PI * 0.5;
+
+  // Float m = 2.0 * std::sqrt(interact.n.x*interact.n.x + interact.n.y*interact.n.y + (interact.n.z + 1.0)*(interact.n.z + 1.0));
+  // interact.u = interact.n.x / m + 0.5;
+  // interact.v =  1.0 - (interact.n.y / m + 0.5);
   
   // interact.u = 0.5 + std::atan2(interact.n.z, interact.n.x) / (2 * M_PI);
   // interact.v = 0.5 - std::asin(interact.n.y) / M_PI;

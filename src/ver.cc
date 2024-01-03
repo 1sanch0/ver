@@ -105,7 +105,7 @@ int main(int argc, char **argv) {
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
-  Scene scene = CornellBox(width, height);
+  Scene scene = SphereTextureTest(width, height);
 
   if (useBVH)
     scene.makeBVH();

@@ -13,6 +13,8 @@
 #include "materials/slides.hh"
 #include "materials/tex.hh"
 
+#include "image/io.hh"
+
 #include "scene.hh"
 
 #define WALLS_H 0
@@ -284,6 +286,44 @@ Scene Bunny(bool pointLight = true, bool areaLight = true) {
                 emmMaterial));
   }
   
+  return scene;
+}
+
+// GOOD
+Scene SphereTextureTest(size_t width, size_t height) {
+  Scene scene;
+
+  Point O(-3, 4.0, 1.5);
+  Point lookAt(-0.3, -0.7, 0.0);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 3.5);
+  scene.set(cam);
+
+  const auto none = Direction(0, 0, 0);
+  const auto white = Direction(.9, .9, .9);
+  const auto minecraftBlue = Spectrum(0.431, 0.694, 1.0);
+
+  scene.set(std::make_unique<ConstantTexture>(minecraftBlue));
+  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+
+  const auto eye = image::read("../uvchecker.ppm");
+  const auto texEye = std::make_shared<PPMTexture>(eye.buffer);
+  const auto texNone = std::make_shared<ConstantTexture>(none);
+
+  const auto botMaterial = std::make_shared<Slides::Material>(white, none, none, none);
+  const auto ballMaterial = std::make_shared<tex::Material>(texEye, texNone, texNone);
+
+  auto meshBot = Quad(Point(0, -1, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 0),
+              botMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 1),
+              botMaterial));
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+            std::make_shared<Sphere>(Point(-0.3, -0.7, 0.0), 0.3),
+            ballMaterial));
+
   return scene;
 }
 

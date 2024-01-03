@@ -30,6 +30,15 @@ class PinholeCamera : public Camera {
         // TODO: Check orthogonality and normalization
       }
 
+    PinholeCamera(size_t width, size_t height, const Point &eye_, const Point &lookAt, Float focalLength)
+      : Camera(width, height), eye(eye_), left(), up(), forward() {
+        const Direction look = (lookAt - eye).normalize();
+        left = look.cross(Direction(0, 1, 0)).normalize();
+        up = left.cross(look).normalize();
+        forward = look * focalLength;
+      }
+    
+
     Ray getRay(size_t x, size_t y) const override {
       assert(x <= film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
