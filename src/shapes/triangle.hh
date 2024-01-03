@@ -38,7 +38,7 @@ class Triangle : public Shape {
     Float area() const override;
 
   private:
-    void getUVs(Vec2 uv[2]) const;
+    void getUVs(Vec2 uv[3]) const;
 
     std::shared_ptr<TriangleMesh> mesh;
     const size_t *v;

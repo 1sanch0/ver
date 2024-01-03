@@ -23,12 +23,14 @@ class ConstantTexture : public Texture {
 
 class PPMTexture : public Texture {
   public:
-    PPMTexture(const image::Framebuffer &fb);
+    PPMTexture(const image::Framebuffer &fb_,
+               Float su_ = 1.0, Float sv_ = 1.0);
 
     Spectrum value(const SurfaceInteraction &interact) const override;
 
   private:
     image::Framebuffer fb;
+    Float su, sv;
 };
 
 class NoiseTexture : public Texture {

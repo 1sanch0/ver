@@ -36,7 +36,7 @@ class Vec2 { // TODO POINT2 DIRECTION2?
     [[nodiscard]] Vec2 operator +(const Vec2 &rhs) const { return Vec2(x + rhs.x, y + rhs.y); }
     [[nodiscard]] Vec2 operator -(const Vec2 &rhs) const { return Vec2(x - rhs.x, y - rhs.y); }
 
-    [[nodiscard]] Vec2 operator *(Float value) const { return Vec2(x + value, y + value); }
+    [[nodiscard]] Vec2 operator *(Float value) const { return Vec2(x * value, y * value); }
 
     [[nodiscard]] Float &operator[](unsigned int idx) {
       assert(idx < 2, "Index out of bounds(0 <= idx < 3)");

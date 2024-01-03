@@ -237,7 +237,7 @@ bool Triangle::intersect(const Ray &ray, Float &tHit,
           // bogus.
           return false;
 
-      // makeCoordSystem(ng.normalize(), dpdu, dpdv);
+      makeCoordSystem(ng.normalize(), dpdu, dpdv);
   }
 
   // Compute error bounds for triangle intersection
@@ -253,7 +253,6 @@ bool Triangle::intersect(const Ray &ray, Float &tHit,
   Point pHit = Point(Direction(p0) * b0 + Direction(p1) * b1 + Direction(p2) * b2);
   Vec2 uvHit = uv[0] * b0 + uv[1] * b1 + uv[2] * b2;
 
-  // TODO: alpha texture
 
   // TODO: do better
   tHit = t;
@@ -263,7 +262,8 @@ bool Triangle::intersect(const Ray &ray, Float &tHit,
   interact.n = mesh->n[v[0]]; // TODO: will cause errors iun the future, interpolation good idea nice
   interact.wo = -ray.d;
 
-
+  interact.u = uvHit[0];
+  interact.v = uvHit[1];
 
   // // Compute the triangle's normal
   // auto p0p1 = p1 - p0;
@@ -315,7 +315,7 @@ Float Triangle::area() const {
   return 0.5 * (p1 - p0).cross(p2 - p0).norm();
 }
 
-void Triangle::getUVs(Vec2 uv[2]) const {
+void Triangle::getUVs(Vec2 uv[3]) const {
   if (mesh->uv.empty()) {
     uv[0] = Vec2(0, 0);
     uv[1] = Vec2(1, 0);
