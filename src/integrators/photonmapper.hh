@@ -36,9 +36,7 @@ namespace photonmapper {
 
   using PhotonMap = nn::KDTree<Photon, 3, PhotonAxisPositition>;
 
-
-  // Spectrum Li(const Ray &r, const Scene &scene, size_t depth);
-  void render(Camera &camera, const Scene &scene, size_t N);
+  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler = COSINE);
 } // namespace photonmapper
 
 #endif // PHOTONMAPPER_H_

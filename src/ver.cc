@@ -77,8 +77,6 @@ int main(int argc, char **argv) {
     exit(0);
   }
 
-  // TODO: perezaaaaa
-
   #if 0
   // Print args
   std::cout << "Arguments:" << std::endl;
@@ -105,34 +103,18 @@ int main(int argc, char **argv) {
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
-  Scene scene = TriangleTextureTest(width, height);
+  Scene scene = CornellBox(width, height);
 
   if (useBVH)
     scene.makeBVH();
-
-  // Point O(0.03, 0.0, -3.5);
-  // Direction left(-1, 0, 0), up(0, 1, 0), forward(0, -1, 6.6);
-  // PinholeCamera cam(width, height, O, left, left.cross(forward).normalize(), forward);
-
-  // Point O(0.0, 0.0, 3.5);
-  // Direction left(1, 0, 0), up(0, 1, 0), forward(0, 0, -3);
-  // PinholeCamera cam(width, height, O, left, up, forward);
-
-  // Point O(-0.3, 0.4, 0.5);
-  // // Direction left(-1, 0, 0), up(0, 1, 0), forward(0, -1, 6.6);
-  // // get left, up, and forward from O and lookAt
-  // Direction forward = (Point(0, 0.15, 0) - O).normalize() * 3;
-  // Direction left = forward.cross(Direction(0, 1, 0)).normalize();
-  // Direction up = left.cross(forward).normalize();
-  // PinholeCamera cam(width, height, O, left, up, forward);
 
   // if (camera == "orthographic")
   //   cam = OrthographicCamera(width, height, O, left, up, forward);
 
   if (integrator == "pathtracer")
     pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
-  // else if (integrator == "photonmapper")
-  //   photonmapper::render(scene.camera, scene, 101/*TODO*/);
+  else if (integrator == "photonmapper")
+    photonmapper::render(scene.camera, scene, spp, maxDepth, sampler);
 
   auto &colorFilm = scene.camera->film;
   auto &normalFilm = scene.camera->nFilm;

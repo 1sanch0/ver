@@ -2,7 +2,7 @@
 
 namespace Slides {
   DiffuseBRDF::DiffuseBRDF(const ::Spectrum &coefficient, Float prob)
-    : k{coefficient}, invProb{(Float)1.0 / prob} {} 
+    : BSDF{false}, k{coefficient}, invProb{(Float)1.0 / prob} {} 
 
   ::Spectrum DiffuseBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
     return k * M_1_PI;
@@ -40,7 +40,7 @@ namespace Slides {
 
 
   PerfectSpecularBRDF::PerfectSpecularBRDF(const ::Spectrum &coefficient, Float prob) 
-    : k{coefficient}, invProb{(Float)1.0 / prob} {} 
+    : BSDF{true}, k{coefficient}, invProb{(Float)1.0 / prob} {} 
 
   ::Spectrum PerfectSpecularBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
     return Spectrum(); // Delta function
@@ -65,7 +65,7 @@ namespace Slides {
 
 
   RefractionBRDF::RefractionBRDF(const ::Spectrum &coefficient, Float prob) 
-    : k{coefficient}, invProb{(Float)1.0 / prob} {} 
+    : BSDF{true}, k{coefficient}, invProb{(Float)1.0 / prob} {} 
 
   ::Spectrum RefractionBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
     return Spectrum(); // Delta function

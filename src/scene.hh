@@ -22,6 +22,7 @@ class EnvironmentMap { // TODO: Review
       if (texture == nullptr) return Spectrum();
 
       SurfaceInteraction interact;
+      // TODO: improve
       Float m = 2.0 * std::sqrt(r.d.x*r.d.x + r.d.y*r.d.y + (r.d.z + 1.0)*(r.d.z + 1.0));
       interact.u = r.d.x / m + 0.5;
       interact.v =  1.0 - (r.d.y / m + 0.5);

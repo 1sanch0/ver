@@ -10,7 +10,7 @@ namespace pathtracer {
     SurfaceInteraction interact;
 
     if (depth == 0) return Spectrum();
-    if (!scene.intersect(r, interact)) return scene.envMapValue(r); // return Spectrum();
+    if (!scene.intersect(r, interact)) return scene.envMapValue(r);
 
     const Point x = interact.p;
     const Direction n = interact.n;
@@ -46,7 +46,7 @@ namespace pathtracer {
         si.t = 0;
         si.n = Direction(0, 0, 0);
 
-        Direction L;
+        Spectrum L;
         for (size_t s = 0; s < spp; s++) {
           Ray r = camera->getRay(i, j);
 
@@ -61,9 +61,6 @@ namespace pathtracer {
         L /= spp;
 
         camera->writeColor(i, j, L);
-        // si.n.x = (si.n.x < 0) ? 0 : si.n.x;
-        // si.n.y = (si.n.y < 0) ? 0 : si.n.y;
-        // si.n.z = (si.n.z < 0) ? 0 : si.n.z;
         camera->writeNormal(i, j, si.n);
         camera->writeDepth(i, j, si.t);
 

@@ -24,7 +24,7 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION 0
+#define VERSION DEFAULT_FINAL
 
 Scene CornellBox(size_t width, size_t height) {
   Scene scene;

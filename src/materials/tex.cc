@@ -2,7 +2,7 @@
 
 namespace tex {
   DiffuseBRDF::DiffuseBRDF(const std::shared_ptr<Texture> &coefficient)
-    : k{coefficient} {}
+    : BSDF{false}, k{coefficient} {}
   
   Spectrum DiffuseBRDF::fr(const SurfaceInteraction &si, const Direction &/*wi*/) const {
     return k->value(si) * M_1_PI;
@@ -39,7 +39,7 @@ namespace tex {
   }
 
   PerfectSpecularBRDF::PerfectSpecularBRDF(const std::shared_ptr<Texture> &coefficient) 
-    : k{coefficient} {}
+    : BSDF{true}, k{coefficient} {}
   
   Spectrum PerfectSpecularBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
     return Spectrum(); // Delta function
@@ -63,7 +63,7 @@ namespace tex {
   }
 
   RefractionBRDF::RefractionBRDF(const std::shared_ptr<Texture> &coefficient) 
-    : k{coefficient} {}
+    : BSDF{true}, k{coefficient} {}
   
   Spectrum RefractionBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
     return Spectrum(); // Delta function
@@ -118,7 +118,7 @@ namespace tex {
   }
 
   SampledBSDF::SampledBSDF(const std::shared_ptr<BSDF> &bsdf_, Float prob) 
-    : bsdf{bsdf_}, invProb{(Float)1.0 / prob} {}
+    : BSDF{bsdf_->isDelta}, bsdf{bsdf_}, invProb{(Float)1.0 / prob} {}
   
   Spectrum SampledBSDF::fr(const SurfaceInteraction &si, const Direction &wi) const {
     return bsdf->fr(si, wi);
