@@ -3,14 +3,14 @@
 
 #include "geometry.hh"
 
-class LightPoint {
+class PointLight {
   public:
-    LightPoint(const Point &point, const Direction &pw): p{point}, power{pw} {} // TODO: cambiar y tal
+    PointLight(const Point &point, const Direction &pw)
+      : p{point}, power{pw} {}
 
   public:
     Point p;
     Direction power;
 };
-
 
 #endif // LIGHTS_H_

@@ -86,28 +86,39 @@ namespace photonmapper {
     const size_t width = camera->film.getWidth();
     const size_t height = camera->film.getHeight();
 
+    // Parameters: (TODO: move to args)
+    size_t nRandomWalks = 100000;
+    unsigned long k = 100000;
+    float rk = 0.07;
+    // ----
+
     auto start = std::chrono::high_resolution_clock::now();
 
     std::list<Photon> photons;
 
-    // TODO: prepare light sources
+    Float totalPower = 0; // TODO: bien, lights is a vector you know?
+    for (const auto &light : scene.lights)
+      totalPower += light.power.norm();
+
+    std::vector<size_t> nPhotons(scene.lights.size());
+    for (size_t i = 0; i < scene.lights.size(); i++)
+      nPhotons[i] = nRandomWalks * std::round(scene.lights[i].power.norm() / totalPower);
+
 
     size_t iter = 0;
 
-    // Parameters:
-    size_t S = 9999999;
-    S = 1000000;
-    unsigned long k = 100000;
-    float rk = 0.07;
+    // TODO: area lights????
+    for (size_t i = 0; i < scene.lights.size(); i++) {
+      const auto &light = scene.lights[i];
+      const size_t n = nPhotons[i];
 
-    for (const auto &light : scene.lights) { // puntuales, TODO para luces de area (triangulos)
       #pragma omp parallel for
-      for (size_t s = 0; s < S; s++) {
+      for (size_t s = 0; s < n; s++) {
         // TODO: P mal
         const Float theta = std::acos(2 * uniform(0, 1) - 1);
         const Float phi = 2 * M_PI * uniform(0, 1);
 
-        const Flux flux = light.power * 4.0 * M_PI / S;
+        const Flux flux = light.power * 4.0 * M_PI / n;
 
         const Direction wi = Direction(std::sin(theta) * std::cos(phi),
                                        std::sin(theta) * std::sin(phi),
@@ -118,7 +129,7 @@ namespace photonmapper {
         #pragma omp critical
         {
           photons.splice(photons.end(), p);
-          std::cout << "Creando photon map: " << (float)iter++ * 100.0f / ((float)S) << "%" << std::endl;
+          std::cout << "Creando photon map: " << (float)iter++ * 100.0f / ((float)n) << "%" << std::endl;
         }
       }
     }

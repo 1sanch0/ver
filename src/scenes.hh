@@ -51,7 +51,7 @@ Scene CornellBox(size_t width, size_t height) {
   auto pinkMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
 
   #if VERSION == 0
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
@@ -61,7 +61,7 @@ Scene CornellBox(size_t width, size_t height) {
   auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
   auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
   #elif VERSION == 1
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = whiteMaterial;
   auto rightMaterial = whiteMaterial;
   auto backMaterial = whiteMaterial;
@@ -94,7 +94,7 @@ Scene CornellBox(size_t width, size_t height) {
               std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
               RBMaterial));
   #elif VERSION == 3
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
@@ -117,7 +117,7 @@ Scene CornellBox(size_t width, size_t height) {
 
   #elif VERSION == 4 
   // Focus
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
@@ -143,7 +143,7 @@ Scene CornellBox(size_t width, size_t height) {
   //             std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
   //             CBMaterial));
   #elif VERSION == 5
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
@@ -227,7 +227,7 @@ Scene Bunny(bool pointLight = true, bool areaLight = true) {
   auto emmMaterial = std::make_shared<Slides::Material>(white, none, none, white);
 
   if (pointLight)
-    scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+    scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
 
   // auto bunnyMaterial = std::make_shared<Slides::Material>(none, white, none, none);
   auto bunnyMaterial = pinkMaterial;
@@ -303,7 +303,7 @@ Scene SphereTextureTest(size_t width, size_t height) {
   const auto minecraftBlue = Spectrum(0.431, 0.694, 1.0);
 
   scene.set(std::make_unique<ConstantTexture>(minecraftBlue));
-  scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
 
   const auto eye = image::read("../uvchecker.ppm");
   const auto texEye = std::make_shared<PPMTexture>(eye.buffer);
@@ -340,7 +340,7 @@ Scene TriangleTextureTest(size_t width, size_t height) {
   const auto minecraftBlue = Spectrum(0.431, 0.694, 1.0);
 
   scene.set(std::make_unique<ConstantTexture>(minecraftBlue));
-  scene.add(LightPoint(Point(0, 5, 0), Direction(0.1, 0.1, 0.1)));
+  scene.add(PointLight(Point(0, 5, 0), Direction(0.1, 0.1, 0.1)));
 
   // const auto eye = image::read("../uvchecker.ppm");
   const auto eye = image::read("../madre.ppm");
@@ -399,7 +399,7 @@ Scene TriangleTextureTest(size_t width, size_t height) {
 //   // Scene scene(std::make_unique<ConstantTexture>(minecraftBlue));
 //   Scene scene(std::make_unique<PPMTexture>(env.buffer));
 
-//   scene.add(LightPoint(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+//   scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
 
 //   auto meshBot = Quad(Point(0, -1, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
 //   scene.add(std::make_unique<GeometricPrimitive>(

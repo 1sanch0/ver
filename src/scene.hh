@@ -12,6 +12,8 @@
 
 #include "accelerators/bvh.hh"
 
+#include "camera.hh"
+
 #include "texture.hh"
 
 class EnvironmentMap { // TODO: Review
@@ -87,7 +89,7 @@ class Scene {
     }
 
     void add(std::unique_ptr<Primitive> primitive) { scene.push_back(std::move(primitive)); }
-    void add(const LightPoint &light) { lights.push_back(light); }
+    void add(const PointLight &light) { lights.push_back(light); }
 
     void set(const std::shared_ptr<Texture> &env) { envMap = EnvironmentMap(env); }
     void set(const std::shared_ptr<Camera> &cam) { camera = cam; }
@@ -109,7 +111,7 @@ class Scene {
 
   public:
     std::vector<std::unique_ptr<Primitive>> scene;
-    std::vector<LightPoint> lights;
+    std::vector<PointLight> lights;
     EnvironmentMap envMap;
     std::shared_ptr<Camera> camera;
 };
