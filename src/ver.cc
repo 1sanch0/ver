@@ -30,7 +30,7 @@ int main(int argc, char **argv) {
     .default_value("300");
 
   parser.addArgument("--spp", "Samples per pixel")
-    .default_value("256");
+    .default_value("64");
   
   parser.addArgument("-d", "Max recursion depth")
     .default_value("24");

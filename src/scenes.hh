@@ -211,8 +211,16 @@ Scene CornellBox(size_t width, size_t height) {
   return scene;
 }
 
-Scene Bunny(bool pointLight = true, bool areaLight = true) {
+Scene Bunny(size_t width, size_t height) {
   Scene scene;
+
+  bool pointLight = false;
+  bool areaLight = true;
+
+  Point O(0, 0, -3.5);
+  Point lookAt(0, -1, 0);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 3.5);
+  scene.set(cam);
 
   const auto none = Direction(0, 0, 0);
   const auto white = Direction(.9, .9, .9);
@@ -232,7 +240,7 @@ Scene Bunny(bool pointLight = true, bool areaLight = true) {
   // auto bunnyMaterial = std::make_shared<Slides::Material>(none, white, none, none);
   auto bunnyMaterial = pinkMaterial;
 
-  simply::PLYFile bunny("../bunny.ply");
+  simply::PLYFile bunny("../../bunny.ply");
   auto meshBunny = std::make_shared<TriangleMesh>(
     Mat4::translation(0, -0.6230, 0) * Mat4::scale(6, 6, 6),
     bunny);

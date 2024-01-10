@@ -261,6 +261,7 @@ bool Triangle::intersect(const Ray &ray, Float &tHit,
   // interact.n = dp02.cross(dp12).normalize();
   interact.n = mesh->n[v[0]]; // TODO: will cause errors iun the future, interpolation good idea nice
   interact.wo = -ray.d;
+  interact.entering = interact.n.dot(interact.wo) < 0;
 
   interact.u = uvHit[0];
   interact.v = uvHit[1];

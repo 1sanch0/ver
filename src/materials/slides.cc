@@ -73,42 +73,30 @@ namespace Slides {
 
   ::Spectrum RefractionBRDF::sampleFr(HemisphereSampler /*sampler*/, const SurfaceInteraction &si, Direction &wi) const {
     // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-    // TODO: probably wrong
-
-    const auto n = si.n;
+   
+    const bool entering = si.entering;
+    const auto normal = si.n;
     const auto v = -si.wo;
-    const bool enters = v.dot(n) < 0;
 
-    const Float n1 = (enters) ? 1.0 : 2;
-    const Float n2 = (enters) ? 2 : 1.0;
-    const Float nn = n1 / n2;
+    const Float n1 = 1.5;
+    const Float n2 = 1.0;
 
-    const Float cosI = v.dot(n);
-    const Float sinT2 = nn * nn * (1.0 - cosI * cosI);
+    const Float n = entering ? n1/n2 : n2/n1;
 
-    if (sinT2 > 1.0) { // Total internal reflection
-      wi = v - n * 2 * v.dot(n);
+    const Float cosI = -normal.dot(v);
+    const Float sinT2 = n * n * (1.0 - cosI * cosI);
+
+    if (sinT2 > 1.0) {
+      wi = v - normal * 2 * cosI;
       return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
     }
 
-    // Fresnel effect (Schlick's approximation) // Move to function
-    Float r0 = (n1 - n2) / (n1 + n2);
-    r0 *= r0;
-    Float cosX = (enters) ? -cosI : std::sqrt(1.0 - sinT2);
-    if (n1 > n2)
-      cosX = std::sqrt(1.0 - sinT2);
-    const Float x = 1.0 - cosX;
-    const Float r = r0 + (1.0 - r0) * x * x * x * x * x;
-
-    if (uniform(0, 1) < r) { // Reflect
-      wi = v - n * 2 * v.dot(n);
-      return k * invProb; // TODO: la rulete rusa aqui que?
-    }
+    // 
 
     const Float cosT = std::sqrt(1.0 - sinT2);
-    wi = v * nn + n * (nn * cosI - cosT);
+    wi = v * n + normal * (n * cosI - cosT);
 
-     return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
+    return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
   }
 
   Float RefractionBRDF::p(HemisphereSampler /*sampler*/, const Direction &/*wi*/) const {

@@ -30,6 +30,7 @@ struct SurfaceInteraction { // TODO: Temporal
   bool sphere = false;
   /* TEST */
   Direction wo;
+  bool entering;
   Float t;
   std::shared_ptr<IMaterial> material;
 };

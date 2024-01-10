@@ -37,7 +37,8 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   // TODO:remove
   interact.p = ray(tHit);
   interact.t = tHit;
-  interact.wo = (ray.o - interact.p).normalize();
+  interact.wo = -ray.d;
+  interact.entering = interact.n.dot(interact.wo) < 0;
 
   const Direction v = interact.n;
   // TODO: Creo que tengo los nombres cambiados jeje
@@ -54,6 +55,11 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   // Partial derivatives w.r.t. theta and phi
   interact.du = Direction(-v.y, v.x, 0).normalize();
   interact.dv = Direction(v.x * v.z, v.y * v.z, -std::sqrt(v.x * v.x + v.y * v.y)).normalize();
+
+  // TODO: ????
+  if (interact.n.dot(interact.wo) < 0) {
+    interact.n = -interact.n;
+  }
 
   // TODO:remove
   interact.sphere = true;
