@@ -36,10 +36,7 @@ namespace image {
     }
 
     Float Gamma::forward(Float x) const {
-      Float eq = x / this->clamp;
-      Float ceq = Clamp(eq, 0, this->clamp);
-      // TODO assert not nan y <1
-      return std::pow(ceq, invGamma);
+      return std::pow(Clamp(x, 0, this->clamp) / this->clamp, invGamma);
     }
 
     void Reinhard2002::applyTo(Film &film) {

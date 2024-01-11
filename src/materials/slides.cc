@@ -15,7 +15,7 @@ namespace Slides {
                                     /* COSINE */ : std::acos(std::sqrt(1.0 - uniform(0, 1)));
     const Float phi = 2.0 * M_PI * uniform(0, 1);
 
-    Direction x, y, z = si.n;
+    Direction x, y, z = (si.entering) ? si.n : -si.n; // TODO: !!!!
     makeCoordSystem(z, x, y); 
     const Mat4 transform(x, y, z);
 
@@ -72,29 +72,10 @@ namespace Slides {
   }
 
   ::Spectrum RefractionBRDF::sampleFr(HemisphereSampler /*sampler*/, const SurfaceInteraction &si, Direction &wi) const {
-    // https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-   
-    const bool entering = si.entering;
-    const auto normal = si.n;
-    const auto v = -si.wo;
+    const Float n1 = si.entering ? 1.0 : 1.5;
+    const Float n2 = si.entering ? 1.5 : 1.0;
 
-    const Float n1 = 1.5;
-    const Float n2 = 1.0;
-
-    const Float n = entering ? n1/n2 : n2/n1;
-
-    const Float cosI = -normal.dot(v);
-    const Float sinT2 = n * n * (1.0 - cosI * cosI);
-
-    if (sinT2 > 1.0) {
-      wi = v - normal * 2 * cosI;
-      return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
-    }
-
-    // 
-
-    const Float cosT = std::sqrt(1.0 - sinT2);
-    wi = v * n + normal * (n * cosI - cosT);
+    wi = refract(-si.wo, si.n, n1, n2);
 
     return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
   }

@@ -30,4 +30,13 @@ class IMaterial {
     virtual Spectrum Le() const = 0;
 };
 
+
+// Helper functions:
+
+// Returns the reflected direction
+Direction reflect(const Direction &v, const Direction &n);
+
+// Returns the refracted direction
+Direction refract(const Direction &v, const Direction &n, Float n1, Float n2);
+
 #endif // MATERIAL_H_

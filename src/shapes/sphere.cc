@@ -38,7 +38,7 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   interact.p = ray(tHit);
   interact.t = tHit;
   interact.wo = -ray.d;
-  interact.entering = interact.n.dot(interact.wo) < 0;
+  interact.entering = interact.n.dot(ray.d) < 0;
 
   const Direction v = interact.n;
   // TODO: Creo que tengo los nombres cambiados jeje
