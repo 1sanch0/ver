@@ -4,7 +4,7 @@
 #include "../utils/time.hh"
 
 namespace kernel {
-  Float box(Float /*distance*/, Float rk) { return /*M_1_PI * */ (1.0 / (rk * rk)); }
+  Float box(Float /*distance*/, Float rk) { return M_1_PI * (1.0 / (rk * rk)); } // TODO: 1/PI ??
   // TODO: fix
   // Float cone(Float distance, Float rk) {
   //   return std::max(0.0, 1.0 - distance / rk);
@@ -40,7 +40,6 @@ namespace photonmapper {
 
     if (!brdf->isDelta) {
       photons.push_back(Photon(x, wo, flux, Fr * cosThetaI / p));
-      // TODO: Fuera o dentro
       photons.splice(photons.end(), randomWalk(Ray(x + wi * eps, wi), scene, flux * Fr * cosThetaI / p, depth - 1, sampler));
     }
 
@@ -96,7 +95,7 @@ namespace photonmapper {
 
     std::list<Photon> photons;
 
-    Float totalPower = 0; // TODO: bien, lights is a vector you know?
+    Float totalPower = 0;
     for (const auto &light : scene.lights)
       totalPower += light.power.norm();
 

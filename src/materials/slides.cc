@@ -75,7 +75,9 @@ namespace Slides {
     const Float n1 = si.entering ? 1.0 : 1.5;
     const Float n2 = si.entering ? 1.5 : 1.0;
 
-    wi = refract(-si.wo, si.n, n1, n2);
+    const Direction n = (si.entering) ? si.n : -si.n;
+
+    wi = refract(-si.wo, n, n1, n2);
 
     return k * invProb; // / wi.dot(n) ; gets cancelled out     <--
   }
