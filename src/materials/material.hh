@@ -33,6 +33,9 @@ class IMaterial {
 
 // Helper functions:
 
+// Returns a random direction in the hemisphere
+Direction randomHemisphereDirection(const Direction &n, HemisphereSampler sampler);
+
 // Returns the reflected direction
 Direction reflect(const Direction &v, const Direction &n);
 

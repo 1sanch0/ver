@@ -23,6 +23,38 @@ Spectrum PPMTexture::value(const SurfaceInteraction &interact) const {
   return Spectrum(c.r, c.g, c.b);
 }
 
+Float PPMTexture::max() const {
+  const size_t width = fb.getWidth();
+  const size_t height = fb.getHeight();
+
+  Float max = 0.0;
+
+  for (size_t i = 0; i < width; i++)
+    for (size_t j = 0; j < height; j++) {
+      const image::Pixel c = fb.get(i, j);
+
+      max = std::max(max, std::max(c.r, std::max(c.g, c.b)));
+    }
+
+  return max;
+}
+
+Float PPMTexture::min() const {
+  const size_t width = fb.getWidth();
+  const size_t height = fb.getHeight();
+
+  Float min = std::numeric_limits<Float>::max();
+
+  for (size_t i = 0; i < width; i++)
+    for (size_t j = 0; j < height; j++) {
+      const image::Pixel c = fb.get(i, j);
+
+      min = std::min(min, std::min(c.r, std::min(c.g, c.b)));
+    }
+
+  return min;
+}
+
 Float turbulance(Float scale, Float roughness, Float u, Float v) {
   Float noise = 0.0;
   Float weight = 1.0;

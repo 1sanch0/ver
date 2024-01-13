@@ -9,9 +9,9 @@ namespace kernel {
   // Float cone(Float distance, Float rk) {
   //   return std::max(0.0, 1.0 - distance / rk);
   // }
-  // Float gaussian(Float distance, Float rk) {
-  //   return std::exp(-distance * distance / (2 * rk * rk));
-  // }
+  Float gaussian(Float distance, Float rk) {
+    return std::exp(-distance * distance / (2 * rk * rk));
+  }
 }
 
 namespace photonmapper {
@@ -76,7 +76,7 @@ namespace photonmapper {
     auto nearest = photonMap.nearest_neighbors(x, k, rk);
     for (const Photon *photon : nearest) {
       const Float distance = (x - photon->pos).norm();
-      L += Fr * cosThetaI / p * photon->flux * kernel::box(distance, rk);
+      L += Fr * cosThetaI / p * photon->flux * kernel::gaussian(distance, rk);
     }
     return L;
   }
@@ -86,7 +86,7 @@ namespace photonmapper {
     const size_t height = camera->film.getHeight();
 
     // Parameters: (TODO: move to args)
-    size_t nRandomWalks = 100000;
+    size_t nRandomWalks = 3000000;
     unsigned long k = 100000;
     float rk = 0.07;
     // ----

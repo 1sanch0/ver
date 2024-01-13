@@ -9,6 +9,9 @@
 class Texture {
   public:
     virtual Spectrum value(const SurfaceInteraction &interact) const = 0;
+
+    virtual Float max() const = 0;
+    virtual Float min() const = 0;
 };
 
 class ConstantTexture : public Texture {
@@ -16,6 +19,9 @@ class ConstantTexture : public Texture {
     explicit ConstantTexture(const Spectrum &k_);
 
     Spectrum value(const SurfaceInteraction &interact) const override;
+
+    Float max() const override { return k.max(); }
+    Float min() const override { return k.min(); }
 
   private:
     Spectrum k;
@@ -27,6 +33,9 @@ class PPMTexture : public Texture {
                Float su_ = 1.0, Float sv_ = 1.0);
 
     Spectrum value(const SurfaceInteraction &interact) const override;
+
+    Float max() const override;
+    Float min() const override;
 
   private:
     image::Framebuffer fb;
@@ -41,6 +50,9 @@ class NoiseTexture : public Texture {
                  const Spectrum &high_ = Spectrum(1, 1, 1));
 
     Spectrum value(const SurfaceInteraction &interact) const override;
+
+    Float max() const override { return std::max(low.max(), high.max()); }
+    Float min() const override { return std::min(low.min(), high.min()); }
 
   private:
     Float scale, roughness;

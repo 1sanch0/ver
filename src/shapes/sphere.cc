@@ -40,17 +40,17 @@ bool Sphere::intersect(const Ray &ray, Float &tHit,
   interact.wo = -ray.d;
   interact.entering = interact.n.dot(ray.d) < 0;
 
-  // const Direction v = interact.n;
-  // // TODO: Creo que tengo los nombres cambiados jeje
-  // Float theta = std::acos(clamp(v.z, -1, 1));
-  // Float phi = std::atan2(v.y, v.x);
-  // phi = (phi < 0) ? phi + 2 * M_PI : phi;
+  const Direction v = interact.n;
+  // TODO: Creo que tengo los nombres cambiados jeje
+  Float theta = std::acos(clamp(v.z, -1, 1));
+  Float phi = std::atan2(v.y, v.x);
+  phi = (phi < 0) ? phi + 2 * M_PI : phi;
 
-  // interact.u = theta * M_1_PI;
-  // interact.v = phi * M_1_PI * 0.5;
+  interact.u = theta * M_1_PI;
+  interact.v = phi * M_1_PI * 0.5;
 
-  // assert(!std::isnan(interact.u), "u is nan");
-  // assert(!std::isnan(interact.v), "v is nan");
+  assert(!std::isnan(interact.u), "u is nan");
+  assert(!std::isnan(interact.v), "v is nan");
 
   // // Partial derivatives w.r.t. theta and phi
   // interact.du = Direction(-v.y, v.x, 0).normalize();

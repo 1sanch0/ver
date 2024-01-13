@@ -24,16 +24,16 @@ int main(int argc, char **argv) {
     .default_value("pathtracer");
 
   parser.addArgument("--width", "Image width")
-    .default_value("300");
+    .default_value("256");
   
   parser.addArgument("--height", "Image height")
-    .default_value("300");
+    .default_value("256");
 
   parser.addArgument("--spp", "Samples per pixel")
     .default_value("64");
   
   parser.addArgument("-d", "Max recursion depth")
-    .default_value("24");
+    .default_value("42");
 
   parser.addArgument("--normals", "Save scene normals image")
     .default_value("false")
@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
   exit(0);
   #endif
 
+  // TODO: constify
   std::string integrator = args["integrator"][0];
   int width = std::stoi(args["--width"][0]);
   int height = std::stoi(args["--height"][0]);
@@ -105,7 +106,11 @@ int main(int argc, char **argv) {
 
   Scene scene = CornellBox(width, height);
   // Scene scene = TriangleTextureTest(width, height);
+  // Scene scene = SphereTextureTest(width, height);
   // Scene scene = Bunny(width, height);
+  // Scene scene = Cardioid(width, height);
+  // Scene scene = LTO(width, height);
+  // width = height = 512;
 
   if (useBVH)
     scene.makeBVH();

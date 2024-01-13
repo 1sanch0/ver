@@ -10,3 +10,4 @@ tmp/
 archive/
 build/
 *.ipynb
+doc/

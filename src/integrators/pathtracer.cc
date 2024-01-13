@@ -26,7 +26,9 @@ namespace pathtracer {
     const Float cosThetaI = brdf->cosThetaI(sampler, wi, n);
     const Float p = brdf->p(sampler, wi);
 
-    const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi) * M_PI; // * std::abs(wi.dot(n)); // TODO: ASK * prob rr
+    assert(Fr.min() >= 0, "Fr < 0"); // Physically based BRDFs are non-negative
+
+    const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi); // M_PI cancels out in brdf->fr
 
     return Lp + Li(Ray(x + wi * eps, wi), scene, depth - 1, sampler) * Fr * cosThetaI / p;
   }

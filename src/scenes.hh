@@ -24,7 +24,7 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION DEFAULT_FINAL
+#define VERSION SCULPTURE
 
 Scene CornellBox(size_t width, size_t height) {
   Scene scene;
@@ -116,8 +116,11 @@ Scene CornellBox(size_t width, size_t height) {
         teapotMaterial));
 
   #elif VERSION == 4 
-  // Focus
-  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  bool pointLight = false;
+
+  if (pointLight)
+    scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
@@ -139,32 +142,54 @@ Scene CornellBox(size_t width, size_t height) {
               std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
               RBMaterial));
 
+  if (!pointLight) {
+    auto meshAreaL = Quad(Point(0, 0.99, 0), Direction(0.5, 0, 0), Direction(0, 0, 0.5), Direction(0, -1, 0));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshAreaL, 0),
+                whiteMaterialE));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshAreaL, 1),
+                whiteMaterialE));
+  }
+
   // scene.add(std::make_unique<GeometricPrimitive>(
   //             std::make_shared<Sphere>(Point(0.0, 0.0, -0.8), 0.2),
   //             CBMaterial));
   #elif VERSION == 5
-  scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  bool pointLight = false;
+
   auto leftMaterial = redMaterial;
   auto rightMaterial = greenMaterial;
   auto backMaterial = whiteMaterial;
   auto topMaterial = whiteMaterial;
   auto botMaterial = whiteMaterial;
 
-  auto lucyMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
-  // auto lucyMaterial = std::make_shared<Slides::Material>(Direction(1,1,1), black, black, white);
+  // auto lucyMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  auto lucyMaterial = std::make_shared<Slides::Material>(Direction(0.9,0.9,0.9), black, black, black);
 
-  simply::PLYFile sus("../lucy.ply");
+  simply::PLYFile sus("../../lucy.ply");
   auto meshSus = std::make_shared<TriangleMesh>(
     Mat4::translation(-0.5, -0.4, 0) * Mat4::scale(6, 6, 6),
     // Mat4::identity(),
     sus);
 
-  std::cout << "TRI: " << meshSus->nTriangles << std::endl;
   for (size_t i = 0; i < meshSus->nTriangles; i++)
     scene.add(
       std::make_unique<GeometricPrimitive>(
         std::make_shared<Triangle>(meshSus, i),
         lucyMaterial));
+  
+  if (pointLight) {
+    scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
+  } else {
+    auto meshAreaL = Quad(Point(0, 0.8, 0), Direction(0.2, -0.3, 0), Direction(0, 0, 0.2), Direction(0, -1, 0));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshAreaL, 0),
+                whiteMaterialE));
+    scene.add(std::make_unique<GeometricPrimitive>(
+                std::make_shared<Triangle>(meshAreaL, 1),
+                whiteMaterialE));
+  }
 
   #endif
 
@@ -211,6 +236,67 @@ Scene CornellBox(size_t width, size_t height) {
   return scene;
 }
 
+Scene Cardioid(size_t width, size_t height) {
+  Scene scene;
+
+  Point O(0, 2.0, -0.4);
+  Point lookAt(0, -1, 0);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 3.5);
+  scene.set(cam);
+
+  const auto none = Direction(0, 0, 0);
+  const auto white = Direction(.9, .9, .9);
+
+  auto whiteMaterial = std::make_shared<Slides::Material>(white, none, none, none);
+  auto emmisiveMaterial = std::make_shared<Slides::Material>(none, none, none, white);
+  auto mugMaterial = std::make_shared<Slides::Material>(Direction(0.70,0.70,0.70), Direction(0.3, 0.3, 0.3), none, none);
+
+
+  const auto woodIm = image::read("../wood.ppm");
+  const auto texWood = std::make_shared<PPMTexture>(woodIm.buffer);
+  const auto texNone = std::make_shared<ConstantTexture>(none);
+
+  const auto floorMaterial = std::make_shared<tex::Material>(texWood, texNone, texNone);
+
+  simply::PLYFile mug("../../mug.ply");
+  auto mesh = std::make_shared<TriangleMesh>(
+    Mat4::rotate(-0.4, 1, 0, 0) *
+    // Mat4::translation(0, -0.6, 0) *
+    Mat4::translation(0, -1, 0) *
+    Mat4::scale(4, 4, 4),
+    mug);
+  
+  for (size_t i = 0; i < mesh->nTriangles; i++)
+    scene.add(
+      std::make_unique<GeometricPrimitive>(
+        std::make_shared<Triangle>(mesh, i),
+        mugMaterial));
+
+
+  scene.add(PointLight(Point(0, 0.2, 0.6), Direction(0.2, 0.2, 0.2)));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0, 0.2, 0.6), 0.1),
+              whiteMaterial));
+  
+  auto meshBot = Quad(Point(0, -1, 0), Direction(-2, 0, 0), Direction(0, 0, -2), Direction(0, 1, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 0),
+              floorMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 1),
+              floorMaterial));
+
+  auto meshTop = Quad(Point(0, 30, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshTop, 0),
+              emmisiveMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshTop, 1),
+              emmisiveMaterial));
+
+  return scene;
+}
+
 Scene Bunny(size_t width, size_t height) {
   Scene scene;
 
@@ -218,8 +304,9 @@ Scene Bunny(size_t width, size_t height) {
   bool areaLight = true;
 
   Point O(0, 0, -3.5);
-  Point lookAt(0, -1, 0);
-  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 3.5);
+  // Point lookAt(0, -1, 0);
+  Point lookAt(0, -0.5, 0);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 4.1);
   scene.set(cam);
 
   const auto none = Direction(0, 0, 0);
@@ -238,7 +325,8 @@ Scene Bunny(size_t width, size_t height) {
     scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
 
   // auto bunnyMaterial = std::make_shared<Slides::Material>(none, white, none, none);
-  auto bunnyMaterial = pinkMaterial;
+  // auto bunnyMaterial = pinkMaterial;
+  auto bunnyMaterial = std::make_shared<Slides::Material>(pink, white-pink *3/5, none, none);
 
   simply::PLYFile bunny("../../bunny.ply");
   auto meshBunny = std::make_shared<TriangleMesh>(
@@ -301,7 +389,7 @@ Scene Bunny(size_t width, size_t height) {
 Scene SphereTextureTest(size_t width, size_t height) {
   Scene scene;
 
-  Point O(-3, 4.0, 1.5);
+  Point O(-3, 0.5, 1.5);
   Point lookAt(-0.3, -0.7, 0.0);
   const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 3.5);
   scene.set(cam);
@@ -313,12 +401,17 @@ Scene SphereTextureTest(size_t width, size_t height) {
   scene.set(std::make_unique<ConstantTexture>(minecraftBlue));
   scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
 
-  const auto eye = image::read("../uvchecker.ppm");
-  const auto texEye = std::make_shared<PPMTexture>(eye.buffer);
+  const auto uvChecker = image::read("../uvchecker.ppm");
+  const auto uni = image::read("../unizarb.ppm");
+  const auto uniMask = image::read("../unizarb-mask.ppm");
+  const auto texUV = std::make_shared<PPMTexture>(uvChecker.buffer);
+  const auto texUni = std::make_shared<PPMTexture>(uni.buffer);
+  const auto texUniMask = std::make_shared<PPMTexture>(uniMask.buffer);
   const auto texNone = std::make_shared<ConstantTexture>(none);
 
   const auto botMaterial = std::make_shared<Slides::Material>(white, none, none, none);
-  const auto ballMaterial = std::make_shared<tex::Material>(texEye, texNone, texNone);
+  const auto ball1Material = std::make_shared<tex::Material>(texUV, texNone, texNone);
+  const auto ball2Material = std::make_shared<tex::Material>(texUni, texNone, texUniMask);
 
   auto meshBot = Quad(Point(0, -1, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
@@ -329,8 +422,12 @@ Scene SphereTextureTest(size_t width, size_t height) {
               botMaterial));
 
   scene.add(std::make_unique<GeometricPrimitive>(
-            std::make_shared<Sphere>(Point(-0.3, -0.7, 0.0), 0.3),
-            ballMaterial));
+            std::make_shared<Sphere>(Point(-0.3, -0.7, -0.5), 0.3),
+            ball1Material));
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+            std::make_shared<Sphere>(Point(-0.3, -0.7, 0.5), 0.3),
+            ball2Material));
 
   return scene;
 }
@@ -444,20 +541,50 @@ Scene TriangleTextureTest(size_t width, size_t height) {
 //   return scene;
 // }
 
-Scene LTO() {
-  // const auto minecraftBlue = Spectrum(0.431, 0.694, 1.0);
+Scene LTO(size_t width, size_t height) {
   Scene scene;
-  // Scene scene(std::make_unique<ConstantTexture>(minecraftBlue));
 
+  // Colors
   const auto none = Direction(0, 0, 0);
   const auto white = Direction(.9, .9, .9);
+  const auto sky = Spectrum(0.431, 0.694, 1.0);
 
   const auto grayLow = Spectrum(0.467, 0.467, 0.467);
   const auto grayHigh = Spectrum(0.667, 0.663, 0.678);
 
+  const auto wood2 = Spectrum(fromHex("#855E42"));
+  const auto wood1 = Spectrum(fromHex(0x553C2A));
+
+  const auto orange = Spectrum(fromHex(0xE2C08C));
+
+  // Image
+  const auto woodImage = image::read("../wood.ppm");
+  const auto uv = image::read("../uvchecker.ppm");
+
+  // Textures
+  const auto texWood = std::make_shared<PPMTexture>(woodImage.buffer);
+
+  const auto texNoise = std::make_shared<NoiseTexture>(0.3, 0.9, 5, 20, white, none);
+  const auto texNoise2 = std::make_shared<NoiseTexture>(0.3, 0.9, 5, 20, wood1/2, wood2);
+  const auto texCte005 = std::make_shared<ConstantTexture>(Spectrum(0.05, 0.05, 0.05));
+  const auto texCte01 = std::make_shared<ConstantTexture>(Spectrum(0.1, 0.1, 0.1));
+  const auto texCte02 = std::make_shared<ConstantTexture>(Spectrum(0.2, 0.2, 0.2));
+  const auto texCte0 = std::make_shared<ConstantTexture>(Spectrum(0, 0, 0));
+
+  scene.set(std::make_unique<ConstantTexture>(sky));
+
+  // Camera
+  Point O(-1, 2, 1.2);
+  Point lookAt(0, 0.3, 0);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 4);
+  scene.set(cam);
+
+  // Materials
   const auto emitter = std::make_shared<Slides::Material>(none, none, none, white);
   const auto whiteMaterial = std::make_shared<Slides::Material>(white, none, none, none);
   const auto LTOMaterial = std::make_shared<Slides::Material>(none, none, white, none);
+  const auto ballMaterial = std::make_shared<Slides::Material>(grayLow, white-grayLow, none, none);
+  const auto ballTexMaterial = std::make_shared<tex::Material>(texWood, texCte0, texCte0);
 
   auto meshEmitter = Quad(Point(0, 3.2, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
@@ -474,12 +601,15 @@ Scene LTO() {
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshFloor, 1),
               whiteMaterial));
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+            std::make_shared<Sphere>(Point(0, 0.3, 0.0), 0.19),
+            ballTexMaterial));
   
 
   simply::PLYFile LTO("../../LTO.ply");
   auto meshLTO = std::make_shared<TriangleMesh>(
-    Mat4::identity(),
-    // Mat4::scale(6, 6, 6),
+    Mat4::scale(2, 2, 2),
     LTO);
   
   for (size_t i = 0; i < meshLTO->nTriangles; i++)

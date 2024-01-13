@@ -5,23 +5,15 @@ namespace Slides {
     : BSDF{false}, k{coefficient}, invProb{(Float)1.0 / prob} {} 
 
   ::Spectrum DiffuseBRDF::fr(const SurfaceInteraction &/*si*/, const Direction &/*wi*/) const {
-    return k * M_1_PI;
+    return k;// M_1_PI gets cancelled out
   }
 
   ::Spectrum DiffuseBRDF::sampleFr(HemisphereSampler sampler, const SurfaceInteraction &si, Direction &wi) const {
   // (Page: 11) https://moodle.unizar.es/add/pluginfile.php/9116118/mod_label/intro/ig_practica_8.pdf?time=1698147710097
 
-    const Float theta = (sampler == SOLID_ANGLE) ? std::acos(uniform(0, 1))
-                                    /* COSINE */ : std::acos(std::sqrt(1.0 - uniform(0, 1)));
-    const Float phi = 2.0 * M_PI * uniform(0, 1);
+    const Direction n = (si.entering) ? si.n : -si.n; // TODO: !!!!
 
-    Direction x, y, z = (si.entering) ? si.n : -si.n; // TODO: !!!!
-    makeCoordSystem(z, x, y); 
-    const Mat4 transform(x, y, z);
-
-    wi = transform * Direction(std::sin(theta) * std::cos(phi),
-                               std::sin(theta) * std::sin(phi),
-                               std::cos(theta));
+    wi = randomHemisphereDirection(n, sampler);
 
     return k * invProb; // * M_1_PI; gets cancelled out     <--
   }
@@ -47,10 +39,9 @@ namespace Slides {
   }
 
   ::Spectrum PerfectSpecularBRDF::sampleFr(HemisphereSampler /*sampler*/, const SurfaceInteraction &si, Direction &wi) const {
-    const auto n = si.n;
-    const auto v = -si.wo;
+    const Direction n = (si.entering) ? si.n : -si.n;
 
-    wi = v - n * 2 * v.dot(n);
+    wi = reflect(-si.wo, n);
 
     return k * invProb; // / wi.dot(n) ; gets cancelled out      <--
   }
@@ -72,7 +63,7 @@ namespace Slides {
   }
 
   ::Spectrum RefractionBRDF::sampleFr(HemisphereSampler /*sampler*/, const SurfaceInteraction &si, Direction &wi) const {
-    const Float n1 = si.entering ? 1.0 : 1.5;
+    const Float n1 = si.entering ? 1.0 : 1.5; // TODO: change to variable
     const Float n2 = si.entering ? 1.5 : 1.0;
 
     const Direction n = (si.entering) ? si.n : -si.n;
