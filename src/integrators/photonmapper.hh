@@ -16,8 +16,8 @@ typedef Direction Flux; // TODO
 namespace photonmapper {
   class Photon {
     public:
-      Photon(const Point &x, const Direction &wi_, const Flux &flux_, const Spectrum &brdf_)
-        : pos{x}, wi{wi_}, flux{flux_}, brdf{brdf_} {}
+      Photon(const Point &x, const Direction &wi_, const Flux &flux_)
+        : pos{x}, wi{wi_}, flux{flux_} {}
 
       Float position(size_t i) const { return pos[i]; }
 
@@ -25,7 +25,6 @@ namespace photonmapper {
       Point pos;
       Direction wi;
       Flux flux;
-      Spectrum brdf;
   };
 
   struct PhotonAxisPositition {

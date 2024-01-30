@@ -24,7 +24,7 @@
 #define DEFAULT_FINAL 4
 #define SCULPTURE 5
 
-#define VERSION SCULPTURE
+#define VERSION WALLS_H
 
 Scene CornellBox(size_t width, size_t height) {
   Scene scene;
@@ -58,8 +58,15 @@ Scene CornellBox(size_t width, size_t height) {
   auto topMaterial = whiteMaterial;
   auto botMaterial = whiteMaterial;
 
-  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
-  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  auto LBMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
+
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
+              LBMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
+              RBMaterial));
   #elif VERSION == 1
   scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));
   auto leftMaterial = whiteMaterial;
@@ -116,7 +123,7 @@ Scene CornellBox(size_t width, size_t height) {
         teapotMaterial));
 
   #elif VERSION == 4 
-  bool pointLight = false;
+  bool pointLight = true;
 
   if (pointLight)
     scene.add(PointLight(Point(0, 0.5, 0), Direction(0.1, 0.1, 0.1)));

@@ -15,7 +15,7 @@ namespace kernel {
 }
 
 namespace photonmapper {
-  std::list<Photon> randomWalk(const Ray &r, const Scene &scene, const Flux &flux, size_t depth, HemisphereSampler sampler) {
+  std::list<Photon> randomWalk(const Ray &r, const Scene &scene, const Flux &flux, size_t depth, HemisphereSampler sampler, bool first = false) {
     constexpr Float eps = 1e-4; // Self-shadow eps
 
     std::list<Photon> photons;
@@ -39,7 +39,8 @@ namespace photonmapper {
     const Float p = brdf->p(sampler, wi);
 
     if (!brdf->isDelta) {
-      photons.push_back(Photon(x, wo, flux, Fr * cosThetaI / p));
+      if (!first)
+        photons.push_back(Photon(x, wo, flux));
       photons.splice(photons.end(), randomWalk(Ray(x + wi * eps, wi), scene, flux * Fr * cosThetaI / p, depth - 1, sampler));
     }
 
@@ -76,9 +77,10 @@ namespace photonmapper {
     auto nearest = photonMap.nearest_neighbors(x, k, rk);
     for (const Photon *photon : nearest) {
       const Float distance = (x - photon->pos).norm();
-      L += Fr * cosThetaI / p * photon->flux * kernel::gaussian(distance, rk);
+      L += Fr * cosThetaI / p * photon->flux * kernel::box(distance, rk);
     }
-    return L;
+      const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi); // M_PI cancels out in brdf->fr
+    return Lp + L;
   }
 
   void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
@@ -124,7 +126,7 @@ namespace photonmapper {
                                        std::cos(theta));
         const Ray ray(light.p, wi); 
 
-        auto p = randomWalk(ray, scene, flux, maxDepth, sampler);
+        auto p = randomWalk(ray, scene, flux, maxDepth, sampler, true);
         #pragma omp critical
         {
           photons.splice(photons.end(), p);
