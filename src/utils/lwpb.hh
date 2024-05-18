@@ -18,8 +18,8 @@ namespace utils {
       }
 
     public:
-      lwpb(unsigned int total, unsigned int bar_length = 30)
-        : total(total), current(0), iter(0), bar_length(bar_length),
+      lwpb(unsigned int total_, unsigned int bar_length_ = 30)
+        : total(total_), current(0), iter(0), bar_length(bar_length_),
           start(std::chrono::high_resolution_clock::now()) {}
 
       void step(unsigned int n = 1) {
@@ -40,9 +40,11 @@ namespace utils {
           ss << (i < (current * bar_length) / total ? fill : empty);
 
         ss << "| " << std::setw(digits(total)) << current << "/" << total;
-        ss << " [" << elapsed.count() << "/" << eta << ", " << static_cast<double>(iter) / elapsed.count() << "it/s]";
-        os << ss.str() << std::flush;
-        os << "\r";
+        ss << " [" << elapsed.count() << "s/" << eta << "s, " << static_cast<double>(iter) / elapsed.count() << "it/s]";
+
+        const auto output = ss.str();
+        os << output << std::flush;
+        os << "\r" << std::string(output.size(), ' ') << "\r";
       }
 
       void update(unsigned int n = 1, std::ostream& os = std::cout) {

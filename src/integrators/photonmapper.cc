@@ -88,9 +88,9 @@ namespace photonmapper {
     const size_t height = camera->film.getHeight();
 
     // Parameters: (TODO: move to args)
-    size_t nRandomWalks = 3000000;
-    unsigned long k = 100000;
-    float rk = 0.07;
+    size_t nRandomWalks = 100000;
+    unsigned long k = 100;
+    float rk = 0.01;
     // ----
 
     auto start = std::chrono::high_resolution_clock::now();

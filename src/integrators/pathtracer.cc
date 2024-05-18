@@ -2,6 +2,7 @@
 #include <chrono>
 #include "geometry.hh"
 #include "../utils/time.hh"
+#include "../utils/lwpb.hh"
 
 namespace pathtracer {
   Spectrum Li(const Ray &r, const Scene &scene, size_t depth, HemisphereSampler sampler) {
@@ -39,7 +40,8 @@ namespace pathtracer {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    size_t iter = 0;
+    // size_t iter = 0;
+    utils::lwpb pbar(width*height*spp);
 
     #pragma omp parallel for
     for (size_t i = 0; i < width; i++) {
@@ -57,7 +59,8 @@ namespace pathtracer {
 
           #pragma omp critical
           {
-            iter++;
+            // iter++;
+            pbar.step();
           }
         }
         L /= spp;
@@ -68,7 +71,8 @@ namespace pathtracer {
 
         #pragma omp critical
         {
-          std::cout << (float)iter * 100.0f / ((float)width*height*spp) << "%" << std::endl;
+          // std::cout << (float)iter * 100.0f / ((float)width*height*spp) << "%" << std::endl;
+          pbar.print(std::cout);
         }
       }
     }
