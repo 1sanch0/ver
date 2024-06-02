@@ -1,7 +1,7 @@
 DEBUG = 1
+PLATFORM = PLATFORM_DESKTOP
 
 CC = g++
-EMCC = em++
 
 SRC_DIR = ./src
 INCLUDE_DIR = ./include
@@ -25,12 +25,26 @@ CC_FILES = $(call rwildcard,$(SRC_DIR),*.cc) # Spaces after commas makes it retu
 OBJECTS = $(patsubst %.cc, %.o, $(CC_FILES))
 
 ver: CFLAGS += -fopenmp -march=native -mtune=native
+viewer: CFLAGS += -DVIEWER -isystem include/raylib/src
+
+ifeq ($(PLATFORM), PLATFORM_DESKTOP)
+viewer: CFLAGS += -fopenmp -march=native -mtune=native
+viewer: LFLAGS += -lpthread -ldl -lX11
+endif
 
 ver: $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 %.o: %.cc %.hh
 	$(CC) $(CFLAGS) -c $< -o $@
+
+viewer: $(OBJECTS) libraylib.a
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+libraylib.a:
+	cd include/ && git clone https://github.com/raysan5/raylib.git --depth=1 --branch=5.0
+	cd include/raylib/src/ && make PLATFORM=$(PLATFORM)
+	cp include/raylib/src/libraylib.a .
 
 run: ver
 	./ver
@@ -41,4 +55,4 @@ callgrind: ver
 
 .PHONY: clean
 clean:
-	$(RM) ver *.out.* $(OBJECTS)
+	$(RM) ver viewer *.out.* $(OBJECTS) *.a

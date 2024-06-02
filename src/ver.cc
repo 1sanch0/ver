@@ -14,9 +14,27 @@
 
 using namespace utils;
 
+#ifdef VIEWER
+namespace raylib {
+  #include "raylib.h"
+  #include "raymath.h"
+}
+#endif
+
+int ver(int argc, char **argv); // Main program
 void merge(const std::unordered_map<std::string, std::vector<std::string>> &args);
 
+int raylib_viewer(); // Optional realtime viewer w/ raylib
+
 int main(int argc, char **argv) {
+  #ifndef VIEWER
+    return ver(argc, argv);
+  #else
+    return raylib_viewer();
+  #endif
+}
+
+int ver(int argc, char **argv) {
   ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch (with tonemappers)");
 
   parser.addArgument("integrator", "Integrator to use")
@@ -189,4 +207,142 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
     image::tonemap::Reinhard2005().applyTo(out);
   else
     throw std::runtime_error("Unknown tonemap");
+}
+
+int raylib_viewer() {
+  #ifdef VIEWER
+  constexpr size_t width = 256;
+  constexpr size_t height = 256;
+
+  Scene scene = CornellBox(width, height);
+  scene.makeBVH();
+
+  size_t spp = 1;
+  constexpr size_t maxDepth = 42;
+  constexpr HemisphereSampler sampler = COSINE;
+
+  // pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
+
+  // const std::string filename = "test.ppm";
+  // image::write(filename, scene.camera->film);
+
+  raylib::InitWindow(width, height, "ver");
+  // raylib::SetTargetFPS(60);
+
+  raylib::Camera2D camera = { 0 };
+  camera.zoom = 1.0f;
+
+  raylib::RenderTexture2D target = raylib::LoadRenderTexture(width, height);
+  raylib::Color buffer[width * height];
+
+  size_t idx = 0;
+  while (!raylib::WindowShouldClose()) {
+    // if (raylib::IsKeyPressed(raylib::KEY_A)) {
+    //   // ALERT! Giga-hack ahead. Beware!
+    //   // dynamic cast to PinholeCamera
+    //   auto cam = std::dynamic_pointer_cast<PinholeCamera>(scene.camera);
+    //   if (cam) {
+    //     cam->eye += cam->left * 0.1;
+    //   }
+
+    //   idx = 0;
+    //   continue;
+    // }
+
+    // Zoom
+    float wheel = raylib::GetMouseWheelMove();
+    if (wheel != 0) {
+      raylib::Vector2 mouse = raylib::GetScreenToWorld2D(raylib::GetMousePosition(), camera);
+      camera.offset = raylib::GetMousePosition();
+      camera.target = mouse;
+
+      float zoom = 1.0f + 0.1f * std::abs(wheel);
+      if (wheel < 0) zoom = 1.0f / zoom;
+      camera.zoom *= zoom;
+    }
+
+    // Pan
+    if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_LEFT)) {
+      raylib::Vector2 delta = raylib::GetMouseDelta();
+      delta = raylib::Vector2Scale(delta, -1.0f / camera.zoom);
+      camera.target = raylib::Vector2Add(camera.target, delta);
+    }
+
+    // Reset
+    if (raylib::IsKeyPressed(raylib::KEY_R)) {
+      camera.zoom = 1.0f;
+      camera.offset = raylib::Vector2{0, 0};
+      camera.target = raylib::Vector2{0, 0};
+    }
+
+    #pragma omp parallel
+    for (size_t k = 0; k < 512*2; k++) {
+      size_t i = idx % width;
+      size_t j = idx / width;
+      idx++;
+
+      SurfaceInteraction si;
+      si.t = 0;
+      si.n = Direction(0, 0, 0);
+
+      Spectrum L;
+      Ray r = scene.camera->getRay(i, j);
+
+      scene.intersect(r, si);
+      L += pathtracer::Li(r, scene, maxDepth, sampler);
+
+      scene.camera->writeColor(i, j, L);
+      // scene.camera->writeNormal(i, j, si.n);
+      // camera->writeDepth(i, j, si.t);
+
+      if (idx >= width * height) {
+        idx = 0;
+        spp++;
+      }
+    }
+
+    auto colorFilm = scene.camera->film;
+    colorFilm.buffer /= spp;
+    // colorFilm /= spp;
+
+    const float max = colorFilm.max();
+
+    std::cout << spp << "/" << colorFilm.max() << std::endl;
+
+
+    // Tonemap
+    float gamma = 2.2;
+    image::tonemap::Gamma(gamma, max).applyTo(colorFilm);
+
+    #pragma omp parallel for
+    for (size_t i = 0; i < width; i++) {
+      for (size_t j = 0; j < height; j++) {
+        const size_t idx = i + j * width;
+        const auto &px = colorFilm[idx];
+        int r = px.r * 255;// * colorFilm.getColorRes() / max;
+        int g = px.g * 255;//;// * colorFilm.getColorRes() / max;
+        int b = px.b * 255;// * colorFilm.getColorRes() / max;
+        buffer[idx] = raylib::Color{r, g, b, 255};
+      }
+    }
+
+    raylib::BeginDrawing();
+      raylib::ClearBackground(raylib::BLACK);
+
+      raylib::UpdateTexture(target.texture, buffer);
+
+      raylib::BeginMode2D(camera);
+        raylib::DrawTexture(target.texture, 0, 0, raylib::WHITE);
+      raylib::EndMode2D();
+
+      raylib::DrawFPS(10, 10);
+      
+      const std::string spp_str = "Samples per pixel: " + std::to_string(spp);
+      raylib::DrawText(spp_str.c_str(), 10, 40, 10, raylib::WHITE);
+    raylib::EndDrawing();
+
+  }
+
+  #endif
+  return 0;
 }

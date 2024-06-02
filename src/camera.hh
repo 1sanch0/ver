@@ -108,7 +108,7 @@ class PinholeCamera : public Camera {
       px.b = depth;
     }
 
-  private:
+  public: // TODO: change
     Point eye;
     Direction left, up, forward;
 };

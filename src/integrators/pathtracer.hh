@@ -7,6 +7,7 @@
 #include <memory>
 
 namespace pathtracer {
+  Spectrum Li(const Ray &r, const Scene &scene, size_t depth, HemisphereSampler sampler);
   void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler = COSINE);
 } // namespace pathtracer
 
