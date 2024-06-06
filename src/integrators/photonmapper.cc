@@ -3,15 +3,34 @@
 #include <list>
 #include "../utils/time.hh"
 
+#include "../utils/lwpb.hh"
+
 namespace kernel {
-  Float box(Float /*distance*/, Float rk) { return M_1_PI * (1.0 / (rk * rk)); } // TODO: 1/PI ??
-  // TODO: fix
-  // Float cone(Float distance, Float rk) {
-  //   return std::max(0.0, 1.0 - distance / rk);
-  // }
-  Float gaussian(Float distance, Float rk) {
-    return std::exp(-distance * distance / (2 * rk * rk));
-  }
+  class Kernel {
+    public:
+      virtual Float operator ()(Float distance, Float rk) = 0;
+  };
+
+  class Box : public Kernel {
+    public:
+      Float operator ()(Float, Float rk) override {
+        return M_1_PI * (1.0 / (rk * rk));
+      }
+  };
+
+  class Cone : public Kernel {
+    public:
+      Float operator ()(Float distance, Float rk) override {
+        return std::max(0.0, 1.0 - distance / rk);
+      }
+  };
+
+  class Gaussian : public Kernel {
+    public:
+      Float operator ()(Float distance, Float rk) override {
+        return std::exp(-distance * distance / (2 * rk * rk));
+      }
+  };
 }
 
 namespace photonmapper {
@@ -24,7 +43,7 @@ namespace photonmapper {
 
     SurfaceInteraction interact, tmp;
 
-    if (!scene.intersect(r, interact)) return photons;
+    if (!scene.intersect(r, interact)) return photons; // TODO: ENV MAP?
 
     const Point x = interact.p;
     const Direction n = interact.n;
@@ -38,11 +57,10 @@ namespace photonmapper {
     const Float cosThetaI = brdf->cosThetaI(sampler, wi, n);
     const Float p = brdf->p(sampler, wi);
 
-    if (!brdf->isDelta) {
-      if (!first)
-        photons.push_back(Photon(x, wo, flux));
-      photons.splice(photons.end(), randomWalk(Ray(x + wi * eps, wi), scene, flux * Fr * cosThetaI / p, depth - 1, sampler));
+    if (!brdf->isDelta) { // Only store photons in non-delta materials
+      photons.push_back(Photon(x, wo, flux * Fr * cosThetaI / p));
     }
+    photons.splice(photons.end(), randomWalk(Ray(x + wi * eps, wi), scene, flux * Fr * cosThetaI / p, depth - 1, sampler, false));
 
     return photons;
   }
@@ -73,13 +91,18 @@ namespace photonmapper {
     if (brdf->isDelta)
       return Li(Ray(x + wi * eps, wi), scene, photonMap, k, rk, depth - 1, sampler) * Fr * cosThetaI / p;
 
+    auto kernel = kernel::Cone();
     Spectrum L;
     auto nearest = photonMap.nearest_neighbors(x, k, rk);
     for (const Photon *photon : nearest) {
       const Float distance = (x - photon->pos).norm();
-      L += Fr * cosThetaI / p * photon->flux * kernel::box(distance, rk);
+      // if in same hemisphere
+      if (n.dot(photon->wi) > 0) {
+        L += Fr * cosThetaI / p * photon->flux * kernel(distance, rk);
+      }
     }
-      const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi); // M_PI cancels out in brdf->fr
+    // const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi); // M_PI cancels out in brdf->fr
+    const Spectrum Lp;
     return Lp + L;
   }
 
@@ -88,9 +111,9 @@ namespace photonmapper {
     const size_t height = camera->film.getHeight();
 
     // Parameters: (TODO: move to args)
-    size_t nRandomWalks = 100000;
-    unsigned long k = 100;
-    float rk = 0.01;
+    size_t nRandomWalks = 400000 * 0.5;
+    unsigned long k = 100*6;
+    float rk = 0.1f;
     // ----
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -106,7 +129,7 @@ namespace photonmapper {
       nPhotons[i] = nRandomWalks * std::round(scene.lights[i].power.norm() / totalPower);
 
 
-    size_t iter = 0;
+    utils::lwpb pbar(nRandomWalks, "Photon Mapping");
 
     // TODO: area lights????
     for (size_t i = 0; i < scene.lights.size(); i++) {
@@ -130,14 +153,14 @@ namespace photonmapper {
         #pragma omp critical
         {
           photons.splice(photons.end(), p);
-          std::cout << "Creando photon map: " << (float)iter++ * 100.0f / ((float)n) << "%" << std::endl;
+          pbar.update();
         }
       }
     }
 
     PhotonMap photonMap(photons, PhotonAxisPositition());
 
-    iter = 0;
+    pbar = utils::lwpb(width*height*spp, "Rendering");
 
     #pragma omp parallel for
     for (size_t i = 0; i < width; i++) {
@@ -155,7 +178,7 @@ namespace photonmapper {
 
           #pragma omp critical
           {
-            iter++;
+            pbar.step();
           }
         }
         L /= spp;
@@ -166,7 +189,7 @@ namespace photonmapper {
 
         #pragma omp critical
         {
-          std::cout << "Rendering: " << (float)iter * 100.0f / ((float)width*height*spp) << "%" << std::endl;
+          pbar.print();
         }
       }
     }

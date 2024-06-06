@@ -41,7 +41,7 @@ namespace pathtracer {
     auto start = std::chrono::high_resolution_clock::now();
 
     // size_t iter = 0;
-    utils::lwpb pbar(width*height*spp);
+    utils::lwpb pbar(width*height*spp, "Rendering");
 
     #pragma omp parallel for
     for (size_t i = 0; i < width; i++) {
