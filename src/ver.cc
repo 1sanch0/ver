@@ -40,6 +40,7 @@ int ver(int argc, char **argv) {
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})
     .default_value("pathtracer");
+    // .default_value("photonmapper");
 
   parser.addArgument("--width", "Image width")
     .default_value("256");
@@ -122,11 +123,11 @@ int ver(int argc, char **argv) {
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
-  Scene scene = CornellBox(width, height);
+  // Scene scene = CornellBox(width, height);
   // Scene scene = TriangleTextureTest(width, height);
   // Scene scene = SphereTextureTest(width, height);
   // Scene scene = Bunny(width, height);
-  // Scene scene = Cardioid(width, height);
+  Scene scene = Cardioid(width, height);
   // Scene scene = LTO(width, height);
   // width = height = 512;
 
@@ -213,8 +214,15 @@ int raylib_viewer() {
   #ifdef VIEWER
   constexpr size_t width = 256;
   constexpr size_t height = 256;
+  constexpr float aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
-  Scene scene = CornellBox(width, height);
+  // Resize stuff
+  float dstWidth = width, dstHeight = height;
+  float dstXOffset = 0, dstYOffset = 0;
+
+  // Scene scene = CornellBox(width, height); 
+  // Scene scene = Cardioid(width, height);
+  Scene scene = Bunny(width, height);
   scene.makeBVH();
 
   size_t spp = 1;
@@ -226,6 +234,7 @@ int raylib_viewer() {
   // const std::string filename = "test.ppm";
   // image::write(filename, scene.camera->film);
 
+  raylib::SetConfigFlags(raylib::FLAG_WINDOW_RESIZABLE);
   raylib::InitWindow(width, height, "ver");
   // raylib::SetTargetFPS(60);
 
@@ -237,18 +246,6 @@ int raylib_viewer() {
 
   size_t idx = 0;
   while (!raylib::WindowShouldClose()) {
-    // if (raylib::IsKeyPressed(raylib::KEY_A)) {
-    //   // ALERT! Giga-hack ahead. Beware!
-    //   // dynamic cast to PinholeCamera
-    //   auto cam = std::dynamic_pointer_cast<PinholeCamera>(scene.camera);
-    //   if (cam) {
-    //     cam->eye += cam->left * 0.1;
-    //   }
-
-    //   idx = 0;
-    //   continue;
-    // }
-
     // Zoom
     float wheel = raylib::GetMouseWheelMove();
     if (wheel != 0) {
@@ -268,11 +265,31 @@ int raylib_viewer() {
       camera.target = raylib::Vector2Add(camera.target, delta);
     }
 
-    // Reset
+    // Reset pan and zoom
     if (raylib::IsKeyPressed(raylib::KEY_R)) {
       camera.zoom = 1.0f;
       camera.offset = raylib::Vector2{0, 0};
       camera.target = raylib::Vector2{0, 0};
+    }
+
+    // Handle resize
+    if (raylib::IsWindowResized()) {
+      int w = raylib::GetScreenWidth();
+      int h = raylib::GetScreenHeight();
+
+      if (w / aspectRatio > h) {
+        dstWidth = h * aspectRatio;
+        dstHeight = h;
+
+        dstXOffset = (w - dstWidth) / 2;
+        if (dstXOffset < 0) dstXOffset = 0;
+      } else {
+        dstWidth = w;
+        dstHeight = w / aspectRatio;
+
+        dstYOffset = (h - dstHeight) / 2;
+        if (dstYOffset < 0) dstYOffset = 0;
+      }
     }
 
     #pragma omp parallel
@@ -332,7 +349,10 @@ int raylib_viewer() {
       raylib::UpdateTexture(target.texture, buffer);
 
       raylib::BeginMode2D(camera);
-        raylib::DrawTexture(target.texture, 0, 0, raylib::WHITE);
+        raylib::DrawTexturePro(target.texture, 
+                               {0, 0, static_cast<float>(width), static_cast<float>(height)},
+                               {0, 0, dstWidth, dstHeight},
+                               {-dstXOffset, -dstYOffset}, 0, raylib::WHITE);
       raylib::EndMode2D();
 
       raylib::DrawFPS(10, 10);

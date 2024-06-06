@@ -19,7 +19,6 @@ file(GLOB SOURCES src/*.cc src/*.hh src/*.h src/**/*.cc src/**/*.hh src/**/*.h)
 message(STATUS "Source files: ${SOURCES}")
 
 add_executable(${PROJECT_NAME} ${SOURCES})
-# target_link_libraries(${PROJECT_NAME} -static)
 
 target_link_libraries(${PROJECT_NAME}
   m
