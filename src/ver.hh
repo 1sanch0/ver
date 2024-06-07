@@ -1,7 +1,7 @@
 #ifndef VER_H_
 #define VER_H_
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(EMSCRIPTEN)
   #define _USE_MATH_DEFINES
   typedef unsigned int uint;
   typedef unsigned long ulong;

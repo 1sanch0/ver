@@ -6,7 +6,8 @@
 #include <unordered_map>
 #include <set>
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || defined(EMSCRIPTEN)
+// EMSCRIPTEN IS KINDA USELESS HERE
   typedef unsigned int uint;
 #endif
 

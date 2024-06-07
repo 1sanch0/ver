@@ -1,5 +1,4 @@
 DEBUG = 1
-PLATFORM = PLATFORM_DESKTOP
 
 CC = g++
 
@@ -25,12 +24,12 @@ CC_FILES = $(call rwildcard,$(SRC_DIR),*.cc) # Spaces after commas makes it retu
 OBJECTS = $(patsubst %.cc, %.o, $(CC_FILES))
 
 ver: CFLAGS += -fopenmp -march=native -mtune=native
-viewer: CFLAGS += -DVIEWER -isystem include/raylib/src
-
-ifeq ($(PLATFORM), PLATFORM_DESKTOP)
-viewer: CFLAGS += -fopenmp -march=native -mtune=native
+viewer: CFLAGS += -DVIEWER -isystem include/raylib/src -fopenmp -march=native -mtune=native
 viewer: LFLAGS += -lpthread -ldl -lX11
-endif
+
+ver.html: CC = emcc
+ver.html: CFLAGS += -DVIEWER -isystem include/raylib/src
+ver.html: LFLAGS += -s USE_GLFW=3 -s ASYNCIFY
 
 ver: $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
@@ -39,6 +38,9 @@ ver: $(OBJECTS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 viewer: $(OBJECTS) libraylib.a
+	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+
+ver.html: $(OBJECTS) libraylib.a
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 libraylib.a:
