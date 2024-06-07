@@ -43,7 +43,7 @@ viewer: $(OBJECTS) libraylib.a
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
 ver.js: $(OBJECTS) libraylib.a
-	$(CC) $(CFLAGS) $^ -o ./demo/$@ $(LFLAGS)
+	$(CC) $(CFLAGS) $^ -o ./docs/$@ $(LFLAGS)
 
 libraylib.a:
 	cd include/ && git clone https://github.com/raysan5/raylib.git --depth=1 --branch=5.0
