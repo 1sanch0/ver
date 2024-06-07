@@ -8,21 +8,92 @@
 class Camera {
   public:
 
-    Camera(size_t width, size_t height, size_t color_res = 10000)
+    Camera(size_t width, size_t height,
+           const Point &eye_, const Direction &left_, const Direction &up_, const Direction &forward_,
+           size_t color_res = 10000)
       : film(width, height, color_res),
         nFilm(width, height, color_res),
         dFilm(width, height, color_res),
+        eye(eye_), left(left_), up(up_), forward(forward_),
         aspectRatio(static_cast<Float>(width) / static_cast<Float>(height)),
-        delta_u(2.0 / static_cast<Float>(width)), delta_v(2.0 / static_cast<Float>(height)) {}
+        delta_u(2.0 / static_cast<Float>(width)), delta_v(2.0 / static_cast<Float>(height)) {
 
+      assert(left.dot(up) == 0, "left and up must be orthogonal");
+      assert(left.dot(forward) == 0, "left and forward must be orthogonal");
+      assert(up.dot(forward) == 0, "up and forward must be orthogonal");
+
+      assert(left.norm() == 1, "left must be normalized");
+      assert(up.norm() == 1, "up must be normalized");
+        
+      if (width > height)
+        up /= aspectRatio;
+      else
+        left *= aspectRatio;
+    }
+
+    Camera(size_t width, size_t height,
+           const Point &eye_, const Point &lookAt, Float focalLength,
+           size_t color_res = 10000)
+      : Camera(width, height,
+               eye_,
+               (lookAt - eye_).cross(Direction(0, 1, 0)).normalize(),
+               (lookAt - eye_).cross(Direction(0, 1, 0)).cross(lookAt - eye_).normalize(),
+               (lookAt - eye_).normalize() * focalLength, color_res
+               ) {}
+    
     virtual Ray getRay(size_t x, size_t y) const = 0;
-    virtual void writeColor(size_t x, size_t y, const Direction &color) = 0;
-    virtual void writeNormal(size_t x, size_t y, const Direction &normal) = 0;
-    virtual void writeDepth(size_t x, size_t y, Float depth) = 0;
+
+    virtual void writeColor(size_t x, size_t y, const Direction &color) {
+      assert(y < film.getWidth(), "x < width");
+      assert(x < film.getHeight(), "y < height");
+
+      assert(color.x >= 0, "x >= 0");
+      assert(color.y >= 0, "y >= 0");
+      assert(color.z >= 0, "z >= 0");
+
+      const size_t idx = y * film.getHeight() * aspectRatio + x;
+
+      image::Pixel &px = film[idx];
+
+      px.r += color.x;
+      px.g += color.y;
+      px.b += color.z;
+    }
+
+    virtual void writeNormal(size_t x, size_t y, const Direction &normal) {
+      assert(x < film.getWidth(), "x < width");
+      assert(y <= film.getHeight(), "y < height");
+
+      const size_t idx = y * film.getHeight() * aspectRatio + x;
+
+      image::Pixel &px = nFilm[idx];
+
+      px.r = std::abs(normal.x);
+      px.g = std::abs(normal.y);
+      px.b = std::abs(normal.z);
+    }
+    
+    virtual void writeDepth(size_t x, size_t y, Float depth) {
+      assert(x < film.getWidth(), "x < width");
+      assert(y <= film.getHeight(), "y < height");
+
+      assert(depth >= 0, "depth < 0");
+
+      const size_t idx = y * film.getHeight() * aspectRatio + x;
+
+      image::Pixel &px = dFilm[idx];
+
+      px.r = depth;
+      px.g = depth;
+      px.b = depth;
+    }
 
   public: // Portected
     image::Film film;
     image::Film nFilm, dFilm; // normal and depth
+
+    Point eye;
+    Direction left, up, forward;
 
     Float aspectRatio;
     Float delta_u, delta_v;
@@ -30,28 +101,7 @@ class Camera {
 
 class PinholeCamera : public Camera {
   public:
-    PinholeCamera(size_t width, size_t height, const Point &eye_, const Direction &left_, const Direction &up_, const Direction &forward_)
-      : Camera(width, height), eye(eye_), left(left_), up(up_), forward(forward_) {
-        // TODO: Check orthogonality and normalization
-
-        if (width > height)
-          up /= aspectRatio;
-        else
-          left *= aspectRatio;
-      }
-
-    PinholeCamera(size_t width, size_t height, const Point &eye_, const Point &lookAt, Float focalLength)
-      : Camera(width, height), eye(eye_), left(), up(), forward() {
-        const Direction look = (lookAt - eye).normalize();
-        left = look.cross(Direction(0, 1, 0)).normalize();
-        up = left.cross(look).normalize();
-        forward = look * focalLength;
-        
-        if (width > height)
-          up /= aspectRatio;
-        else
-          left *= aspectRatio;
-      }
+    using Camera::Camera;
 
     Ray getRay(size_t x, size_t y) const override {
       assert(x <= film.getWidth(), "x < width");
@@ -69,62 +119,11 @@ class PinholeCamera : public Camera {
 
       return Ray(eye, d.normalize());
     }
-
-    void writeColor(size_t x, size_t y, const Direction &color) override {
-      assert(y < film.getWidth(), "x < width");
-      assert(x < film.getHeight(), "y < height");
-
-      assert(color.x >= 0, "x >= 0");
-      assert(color.y >= 0, "y >= 0");
-      assert(color.z >= 0, "z >= 0");
-
-      const size_t idx = y * film.getHeight() * aspectRatio + x;
-
-      image::Pixel &px = film[idx];
-
-      px.r += color.x;
-      px.g += color.y;
-      px.b += color.z;
-    }
-
-    void writeNormal(size_t x, size_t y, const Direction &normal) override {
-      assert(x < film.getWidth(), "x < width");
-      assert(y <= film.getHeight(), "y < height");
-
-      const size_t idx = y * film.getHeight() * aspectRatio + x;
-
-      image::Pixel &px = nFilm[idx];
-
-      px.r = std::abs(normal.x);
-      px.g = std::abs(normal.y);
-      px.b = std::abs(normal.z);
-    }
-
-    void writeDepth(size_t x, size_t y, Float depth) override {
-      assert(x < film.getWidth(), "x < width");
-      assert(y <= film.getHeight(), "y < height");
-
-      assert(depth >= 0, "depth < 0");
-
-      const size_t idx = y * film.getHeight() * aspectRatio + x;
-
-      image::Pixel &px = dFilm[idx];
-
-      px.r = depth;
-      px.g = depth;
-      px.b = depth;
-    }
-
-  public: // Private
-    Point eye;
-    Direction left, up, forward;
 };
 
-class OrthographicCamera : public PinholeCamera { // TODO: IMPROVE and inherit from Camera
+class OrthographicCamera : public Camera {
   public:
-
-    OrthographicCamera(size_t width, size_t height, const Point &eye_, const Direction &left_, const Direction &up_, const Direction &forward_)
-      : PinholeCamera(width, height, eye_, left_, up_, forward_) {}
+    using Camera::Camera;
 
     Ray getRay(size_t x, size_t y) const override {
       assert(x <= film.getWidth(), "x < width");
@@ -143,6 +142,5 @@ class OrthographicCamera : public PinholeCamera { // TODO: IMPROVE and inherit f
       return Ray(eye + d, forward.normalize());
     }
 };
-
 
 #endif // CAMERA_H_
