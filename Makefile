@@ -27,9 +27,9 @@ ver: CFLAGS += -fopenmp -march=native -mtune=native
 viewer: CFLAGS += -DVIEWER -isystem include/raylib/src -fopenmp -march=native -mtune=native
 viewer: LFLAGS += -lpthread -ldl -lX11
 
-ver.html: CC = emcc
-ver.html: CFLAGS += -DVIEWER -isystem include/raylib/src
-ver.html: LFLAGS += -s USE_GLFW=3 -s ASYNCIFY
+ver.js: CC = emcc
+ver.js: CFLAGS += -DVIEWER -isystem include/raylib/src
+ver.js: LFLAGS += -s USE_GLFW=3 -s ASYNCIFY
 
 ver: $(OBJECTS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
@@ -40,8 +40,8 @@ ver: $(OBJECTS)
 viewer: $(OBJECTS) libraylib.a
 	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
 
-ver.html: $(OBJECTS) libraylib.a
-	$(CC) $(CFLAGS) $^ -o $@ $(LFLAGS)
+ver.js: $(OBJECTS) libraylib.a
+	$(CC) $(CFLAGS) $^ -o ./demo/$@ $(LFLAGS)
 
 libraylib.a:
 	cd include/ && git clone https://github.com/raysan5/raylib.git --depth=1 --branch=5.0
