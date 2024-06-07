@@ -220,9 +220,9 @@ int raylib_viewer() {
   float dstWidth = width, dstHeight = height;
   float dstXOffset = 0, dstYOffset = 0;
 
-  // Scene scene = CornellBox(width, height); 
+  Scene scene = CornellBox(width, height); 
   // Scene scene = Cardioid(width, height);
-  Scene scene = Bunny(width, height);
+  // Scene scene = Bunny(width, height);
   scene.makeBVH();
 
   size_t spp = 1;
