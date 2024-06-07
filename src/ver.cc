@@ -30,6 +30,7 @@ int main(int argc, char **argv) {
   #ifndef VIEWER
     return ver(argc, argv);
   #else
+    (void)argc;(void)argv;
     return raylib_viewer();
   #endif
 }
@@ -210,6 +211,22 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
     throw std::runtime_error("Unknown tonemap");
 }
 
+void moveCamera(Scene &scene, const Direction &dir, raylib::Color *buffer, const size_t width, const size_t height) {
+  PinholeCamera *cam = dynamic_cast<PinholeCamera*>(scene.camera.get());
+  if (cam) {
+    cam->eye += dir;
+    for (size_t i = 0; i < width * height; i++) {
+      scene.camera->film.buffer[i] = image::Pixel{0, 0, 0};
+      buffer[i] = raylib::Color{0, 0, 0, 255};
+    }
+  }
+}
+
+enum ViewerMode {
+  IMAGE,
+  GAME
+};
+
 int raylib_viewer() {
   #ifdef VIEWER
   constexpr size_t width = 256;
@@ -229,14 +246,8 @@ int raylib_viewer() {
   constexpr size_t maxDepth = 42;
   constexpr HemisphereSampler sampler = COSINE;
 
-  // pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
-
-  // const std::string filename = "test.ppm";
-  // image::write(filename, scene.camera->film);
-
   raylib::SetConfigFlags(raylib::FLAG_WINDOW_RESIZABLE);
   raylib::InitWindow(width, height, "ver");
-  // raylib::SetTargetFPS(60);
 
   raylib::Camera2D camera = { 0 };
   camera.zoom = 1.0f;
@@ -244,32 +255,112 @@ int raylib_viewer() {
   raylib::RenderTexture2D target = raylib::LoadRenderTexture(width, height);
   raylib::Color buffer[width * height];
 
+  ViewerMode mode = ViewerMode::IMAGE;
+
   size_t idx = 0;
+  PinholeCamera *cam = dynamic_cast<PinholeCamera*>(scene.camera.get());
+  Direction rf, rl;
+  Point re;
+  if (cam) {
+    rf = cam->forward;
+    rl = cam->left;
+    re = cam->eye;
+  }
   while (!raylib::WindowShouldClose()) {
-    // Zoom
-    float wheel = raylib::GetMouseWheelMove();
-    if (wheel != 0) {
-      raylib::Vector2 mouse = raylib::GetScreenToWorld2D(raylib::GetMousePosition(), camera);
-      camera.offset = raylib::GetMousePosition();
-      camera.target = mouse;
-
-      float zoom = 1.0f + 0.1f * std::abs(wheel);
-      if (wheel < 0) zoom = 1.0f / zoom;
-      camera.zoom *= zoom;
+    // Change mode
+    if (raylib::IsKeyPressed(raylib::KEY_TAB)) {
+      if (mode == ViewerMode::IMAGE) {
+        camera.zoom = 1.0f;
+        camera.target = raylib::Vector2{0, 0};
+        camera.offset = raylib::Vector2{0, 0};
+      }
+      mode = (mode == ViewerMode::IMAGE) ? ViewerMode::GAME : ViewerMode::IMAGE;
     }
 
-    // Pan
-    if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_LEFT)) {
-      raylib::Vector2 delta = raylib::GetMouseDelta();
-      delta = raylib::Vector2Scale(delta, -1.0f / camera.zoom);
-      camera.target = raylib::Vector2Add(camera.target, delta);
+    // Movement
+    if (cam && mode == ViewerMode::GAME) {
+      if (raylib::IsKeyDown(raylib::KEY_A)) {
+        idx = 0;
+        moveCamera(scene, cam->left.normalize() * 0.1, buffer, width, height);
+      }
+      if (raylib::IsKeyDown(raylib::KEY_D)) {
+        idx = 0;
+        moveCamera(scene, -cam->left.normalize() * 0.1, buffer, width, height);
+      }
+      if (raylib::IsKeyDown(raylib::KEY_W)) {
+        idx = 0;
+        moveCamera(scene, cam->forward.normalize() * 0.1, buffer, width, height);
+      }
+      if (raylib::IsKeyDown(raylib::KEY_S)) {
+        idx = 0;
+        moveCamera(scene, -cam->forward.normalize() * 0.1, buffer, width, height);
+      }
+      if (raylib::IsKeyDown(raylib::KEY_LEFT_SHIFT)) {
+        idx = 0;
+        moveCamera(scene, -Direction(0,1,0)  * 0.1, buffer, width, height);
+      }
+      if (raylib::IsKeyDown(raylib::KEY_SPACE)) {
+        idx = 0;
+        moveCamera(scene, Direction(0,1,0)  * 0.1, buffer, width, height);
+      }
+
+      // Rotate with mouse
+      if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_RIGHT)) {
+        raylib::Vector2 delta = raylib::GetMouseDelta();
+        Mat4 rotx = Mat4::rotate(delta.x * 0.01, 0, 1, 0);
+        Mat4 roty = Mat4::rotate(delta.y * 0.01, 1, 0, 0);
+
+        cam->forward = rotx * roty * cam->forward;
+        cam->left = cam->forward.cross(Direction(0, 1, 0)).normalize();
+
+        idx = 0;
+        for (size_t i = 0; i < width * height; i++) {
+          scene.camera->film.buffer[i] = image::Pixel{0, 0, 0};
+          buffer[i] = raylib::Color{0, 0, 0, 255};
+        }
+      }
     }
 
-    // Reset pan and zoom
+    if (mode == ViewerMode::IMAGE) {
+      // Zoom
+      float wheel = raylib::GetMouseWheelMove();
+      if (wheel != 0) {
+        raylib::Vector2 mouse = raylib::GetScreenToWorld2D(raylib::GetMousePosition(), camera);
+        camera.offset = raylib::GetMousePosition();
+        camera.target = mouse;
+
+        float zoom = 1.0f + 0.1f * std::abs(wheel);
+        if (wheel < 0) zoom = 1.0f / zoom;
+        camera.zoom *= zoom;
+      }
+
+      // Pan
+      if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_LEFT)) {
+        raylib::Vector2 delta = raylib::GetMouseDelta();
+        delta = raylib::Vector2Scale(delta, -1.0f / camera.zoom);
+        camera.target = raylib::Vector2Add(camera.target, delta);
+      }
+    }
+    // Reset
     if (raylib::IsKeyPressed(raylib::KEY_R)) {
-      camera.zoom = 1.0f;
-      camera.offset = raylib::Vector2{0, 0};
-      camera.target = raylib::Vector2{0, 0};
+      // Reset pan and zoom
+      if (mode == ViewerMode::IMAGE) {
+        camera.zoom = 1.0f;
+        camera.offset = raylib::Vector2{0, 0};
+        camera.target = raylib::Vector2{0, 0};
+      }
+      // Reset camera
+      if (cam && mode == ViewerMode::GAME) {
+        cam->eye = re;
+        cam->forward = rf;
+        cam->left = rl;
+
+        idx = 0;
+        for (size_t i = 0; i < width * height; i++) {
+          scene.camera->film.buffer[i] = image::Pixel{0, 0, 0};
+          buffer[i] = raylib::Color{0, 0, 0, 255};
+        }
+      }
     }
 
     // Handle resize
@@ -359,6 +450,13 @@ int raylib_viewer() {
       
       const std::string spp_str = "Samples per pixel: " + std::to_string(spp);
       raylib::DrawText(spp_str.c_str(), 10, 40, 10, raylib::WHITE);
+      if (cam && mode == ViewerMode::GAME) {
+        std::string eye_str;
+        eye_str += "x: " + std::to_string(cam->eye.x) + ", ";
+        eye_str += "y: " + std::to_string(cam->eye.y) + ", ";
+        eye_str += "z: " + std::to_string(cam->eye.z);
+        raylib::DrawText(eye_str.c_str(), 10, 60, 10, raylib::WHITE);
+      }
     raylib::EndDrawing();
 
   }
