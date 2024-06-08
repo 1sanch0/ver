@@ -69,11 +69,13 @@ class Scene {
 
       Spectrum L;
       const Point x = interact.p;
-      const Direction n = interact.n;
+      const Direction n = (interact.entering) ? interact.n : -interact.n;
 
       for (const auto &light : lights) {
         const Direction wi = (light.p - x).normalize();
         const Float d2l = (light.p - x).norm();
+
+        if (wi.dot(n) <= 0) continue; // Light is behind the surface
 
         SurfaceInteraction interact2;
         if (intersect(Ray(x + wi * eps, wi), interact2)) {

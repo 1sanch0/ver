@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
     return ver(argc, argv);
   #else
     (void)argc;(void)argv;
-    int width = 256;
-    int height = 256;
+    int width = 800/2;
+    int height = 500/2;
     Scene scene = CornellBox(width, height); 
     // Scene scene = Cardioid(width, height);
     // Scene scene = Bunny(width, height);

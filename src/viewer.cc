@@ -173,6 +173,11 @@ void Viewer::handleInput() {
       scene.camera->forward = rotx * roty * scene.camera->forward;
       scene.camera->left = scene.camera->forward.cross(Direction(0, 1, 0)).normalize();
       scene.camera->up = scene.camera->left.cross(scene.camera->forward).normalize();
+
+      if (scene.camera->film.getWidth() > scene.camera->film.getHeight())
+        scene.camera->up /= scene.camera->aspectRatio;
+      else
+        scene.camera->left *= scene.camera->aspectRatio;
     }
 
     if (relesead) resetTarget();
