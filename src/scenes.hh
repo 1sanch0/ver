@@ -136,6 +136,7 @@ Scene CornellBox(size_t width, size_t height) {
 
   auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
   auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+  // auto RBMaterial = std::make_shared<Slides::Material>(black, Direction(0.2,0.2,0.2), Direction(0.8,0.8,0.8), black);
   // auto RBMaterial = std::make_shared<Slides::Material>(black, Direction(1,1,1), black, black);
 
   // auto CBMaterial = std::make_shared<Slides::Material>(light_blue, black, black, black);
@@ -280,10 +281,10 @@ Scene Cardioid(size_t width, size_t height) {
         mugMaterial));
 
 
-  scene.add(PointLight(Point(0, 0.2, 0.6), Direction(0.2, 0.2, 0.2)));
+  // scene.add(PointLight(Point(0, 0.2, 0.6), Direction(0.2, 0.2, 0.2)));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Sphere>(Point(0, 0.2, 0.6), 0.1),
-              whiteMaterial));
+              emmisiveMaterial));
   
   auto meshBot = Quad(Point(0, -1, 0), Direction(-2, 0, 0), Direction(0, 0, -2), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
@@ -293,14 +294,110 @@ Scene Cardioid(size_t width, size_t height) {
               std::make_shared<Triangle>(meshBot, 1),
               floorMaterial));
 
-  auto meshTop = Quad(Point(0, 30, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
+  // auto meshTop = Quad(Point(0, 30, 0), Direction(-10, 0, 0), Direction(0, 0, -10), Direction(0, 1, 0));
+  // scene.add(std::make_unique<GeometricPrimitive>(
+  //             std::make_shared<Triangle>(meshTop, 0),
+  //             emmisiveMaterial));
+  // scene.add(std::make_unique<GeometricPrimitive>(
+  //             std::make_shared<Triangle>(meshTop, 1),
+  //             emmisiveMaterial));
+
+  return scene;
+}
+
+Scene Cardioid2(size_t width, size_t height) {
+  Scene scene;
+
+  Point O(0.0, 0.0, -3.5);
+  Direction left(-1, 0, 0), up(0, 1, 0), forward(0, 0, 3);
+  const auto cam = std::make_shared<PinholeCamera>(width, height, O, left, up, forward);
+  scene.set(cam);
+
+  auto white = Direction(.9, .9, .9);
+  auto whiteL= Direction(1, 1, 1);
+  auto red   = Direction(.9, 0, 0);
+  auto green = Direction(0, .9, 0);
+  auto black = Direction(0, 0, 0);
+  auto pink = Direction(0.8941, 0.66667, 0.9);
+  auto light_blue = Direction(0.5529, 1, 1);
+
+  auto whiteMaterial = std::make_shared<Slides::Material>(white, black, black, black);
+  auto whiteMaterialE = std::make_shared<Slides::Material>(white, black, black, whiteL);
+  auto whiteMaterialReflect = std::make_shared<Slides::Material>(black, white, black, black);
+  auto redMaterial = std::make_shared<Slides::Material>(red, black, black, black);
+  auto greenMaterial = std::make_shared<Slides::Material>(green, black, black, black);
+
+  auto pinkMaterial = std::make_shared<Slides::Material>(pink, black, black, black);
+
+  scene.add(PointLight(Point(0.3, 0.1, 0), Direction(0.1, 0.1, 0.1)));
+
+  auto leftMaterial = redMaterial;
+  auto rightMaterial = greenMaterial;
+  auto backMaterial = whiteMaterial;
+  auto topMaterial = whiteMaterial;
+  auto botMaterial = whiteMaterial;
+
+  auto LBMaterial = std::make_shared<Slides::Material>(light_blue/1.5, Direction(1,1,1) - light_blue/1.5, black, black);
+  auto RBMaterial = std::make_shared<Slides::Material>(black, black, Direction(1,1,1), black);
+
+  simply::PLYFile egg("../../egg.ply");
+  auto meshEgg = std::make_shared<TriangleMesh>(
+    Mat4::translation(-0.2, -0.6230, -0.1) * Mat4::scale(4, 4, 4),
+    egg);
+  
+  for (size_t i = 0; i < meshEgg->nTriangles; i++)
+    scene.add(
+      std::make_unique<GeometricPrimitive>(
+        std::make_shared<Triangle>(meshEgg, i),
+        RBMaterial));
+
+  // scene.add(std::make_unique<GeometricPrimitive>(
+  //             std::make_shared<Sphere>(Point(-0.5, -0.7, 0.25), 0.3),
+  //             LBMaterial));
+  // scene.add(std::make_unique<GeometricPrimitive>(
+  //             std::make_shared<Sphere>(Point(0.5, -0.7, -0.25), 0.3),
+  //             RBMaterial));
+
+  auto meshLeft = Quad(Point(-1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshLeft, 0),
+              leftMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshLeft, 1),
+              leftMaterial));
+
+  auto meshRight = Quad(Point(1, 0, 0), Direction(0, 1, 0), Direction(0, 0, 1), (Direction(-1, 0, 0)));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshRight, 0),
+              rightMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshRight, 1),
+              rightMaterial));
+
+  auto meshBack = Quad(Point(0, 0, 1), Direction(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, -1));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBack, 0),
+              backMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBack, 1),
+              backMaterial));
+
+  auto meshTop = Quad(Point(0, 1, 0), Direction(1, 0, 0), Direction(0, 0, 1), Direction(0, -1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshTop, 0),
-              emmisiveMaterial));
+              topMaterial));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshTop, 1),
-              emmisiveMaterial));
+              topMaterial));
 
+  auto meshBot = Quad(Point(0, -1, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 0),
+              botMaterial));
+  scene.add(std::make_unique<GeometricPrimitive>(
+              std::make_shared<Triangle>(meshBot, 1),
+              botMaterial));
+  
   return scene;
 }
 
@@ -345,6 +442,17 @@ Scene Bunny(size_t width, size_t height) {
       std::make_unique<GeometricPrimitive>(
         std::make_shared<Triangle>(meshBunny, i),
         bunnyMaterial));
+
+  // simply::PLYFile egg("../../egg.ply");
+  // auto meshEgg = std::make_shared<TriangleMesh>(
+  //   Mat4::translation(0, -0.6230, -0.1) * Mat4::scale(6, 6, 6),
+  //   egg);
+  
+  // for (size_t i = 0; i < meshEgg->nTriangles; i++)
+  //   scene.add(
+  //     std::make_unique<GeometricPrimitive>(
+  //       std::make_shared<Triangle>(meshEgg, i),
+  //       bunnyMaterial));
   
 
   auto meshLeft = Quad(Point(-1, -0.7, 0), Direction(0, 1, 0), Direction(0, 0, 1), Direction(1, 0, 0));

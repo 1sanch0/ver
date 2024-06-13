@@ -26,11 +26,11 @@ int main(int argc, char **argv) {
     return ver(argc, argv);
   #else
     (void)argc;(void)argv;
-    int width = 800/2;
-    int height = 500/2;
-    Scene scene = CornellBox(width, height); 
+    int width = 800/4;
+    int height = 500/4;
+    // Scene scene = CornellBox(width, height); 
     // Scene scene = Cardioid(width, height);
-    // Scene scene = Bunny(width, height);
+    Scene scene = Bunny(width, height);
     scene.makeBVH();
 
     Viewer viewer(scene);
@@ -133,6 +133,7 @@ int ver(int argc, char **argv) {
   // Scene scene = SphereTextureTest(width, height);
   // Scene scene = Bunny(width, height);
   Scene scene = Cardioid(width, height);
+  // Scene scene = Cardioid2(width, height);
   // Scene scene = LTO(width, height);
   // width = height = 512;
 

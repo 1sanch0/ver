@@ -6,15 +6,12 @@
 #include "interaction.hh"
 #include "lights.hh"
 #include "shapes/primitive.hh"
-#include <vector>
-
 #include "spectrum.hh"
-
 #include "accelerators/bvh.hh"
-
 #include "camera.hh"
-
 #include "texture.hh"
+#include "materials/material.hh"
+#include <vector>
 
 class EnvironmentMap { // TODO: Review
   public:
@@ -64,7 +61,7 @@ class Scene {
       return hit;
     }
 
-    Spectrum directLight(const SurfaceInteraction &interact) const {
+    Spectrum directLight(const SurfaceInteraction &interact, const std::shared_ptr<BSDF> bsdf) const {
       constexpr Float eps = 5e-4;
 
       Spectrum L;
@@ -80,10 +77,10 @@ class Scene {
         SurfaceInteraction interact2;
         if (intersect(Ray(x + wi * eps, wi), interact2)) {
           if (interact2.t > d2l - eps) {
-            L += light.power / (d2l*d2l) * std::abs(n.dot(wi));
+            L += light.power / (d2l*d2l) * bsdf->fr(interact, wi) * std::abs(n.dot(wi));
           }
         } else {
-          L += light.power / (d2l*d2l) * std::abs(n.dot(wi));
+          L += light.power / (d2l*d2l) * bsdf->fr(interact, wi) * std::abs(n.dot(wi));
         }
       }
 
