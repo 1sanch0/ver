@@ -33,7 +33,7 @@ dirección \(\mathbf{\omega_{o}}\)
 donde:
 \begin{itemize}
   \item \(\mathbf{x}\) es un punto en el espacio
-  \item \(\mathbf{\omega_{o}}\) es la direccion de salida
+  \item \(\mathbf{\omega_{o}}\) es la dirección de salida
   \item \(\mathbf{n}\) es la normal de la superficie
   \item \(\mathbf{\omega_{i}}\) es la dirección de la radiancia incidente
   \item \(L_o(\mathbf{x}, \mathbf{\omega_{o}})\) es la cantidad de radiancia
@@ -65,7 +65,7 @@ integral.
 \[F_{N}=\frac{b-a}{N} \sum_{i=1}^{N} f(X_{i}) \]
 \[E[F_{N}]= \int^{b}_{a} f(x) \; dx\]
 
-Si la variable aleatoria \(X_{i}\) se extrae de una PDF arbitraria entonces, la
+Si la variable aleatoria \(X_{i}\) se extrae de una PDF arbitraria entonces la
 esperanza del siguiente estimador sigue siendo la integral.
 \begin{equation}
   F_{N}=\frac{1}{N} \sum_{i=1}^{N} \frac{f(X_{i})}{p(X_{i})}
@@ -74,7 +74,7 @@ esperanza del siguiente estimador sigue siendo la integral.
   E[F_{N}]= \int^{b}_{a} f(x) dx
 \end{equation}
 
-Aplicandolo la ecuacion 2 a nuestra ecuación de render (Eq. 1):
+Aplicando la ecuación 2 a nuestra ecuación de render (Eq. 1):
 
 \begin{equation}
   L_o(\mathbf{x}, \mathbf{\omega_{o}}) \approx L_e(\mathbf{x}, \mathbf{\omega_{o}}) + \frac{1}{N} \sum_{i=1}^{N} \frac{L_i(\mathbf{x}, \mathbf{\omega_{i}}) \cdot f_r(\mathbf{x}, \mathbf{\omega_{i}}, \mathbf{\omega_{o}}) \cdot  |\mathbf{n} \cdot \mathbf{\omega_{i}}|}{p(\omega_{i})}
@@ -96,7 +96,7 @@ Podemos descomponer la radiancia incidente en dos componentes:
         que llega a \(\mathbf{x}\) tras haber sido reflejada o refractada.
 \end{itemize}
 
-Por lo que la ecuacion de render se puede reescribir como:
+Por lo que la ecuación de render se puede reescribir como:
 
 \begin{equation}
   \begin{split}
@@ -126,7 +126,7 @@ Y como la PDF de \(\omega_{p}\) siempre sera 1, la ecuación se simplifica a:
 \end{equation}
 
 Finalmente aplicaremos el estimador de Monte Carlo (Eq. 3) para aproximar la
-integral de render y la radiancia de un pixel \(L\) sera la media de todos los
+integral de render y la radiancia de un pixel \(L\) será la media de todos los
 caminos que pasan por el pixel:
 \begin{equation}
   L \approx \frac{1}{spp} \sum_{i=1}^{spp} L_{o}(\mathbf{x_{1i}}, \mathbf{\omega_{o1i}})
@@ -138,7 +138,7 @@ información del choque (\(\mathbf{x}, \mathbf{\omega_{o}}, \mathbf{n}\),
 material), que se usará para calcular \(L_o(\mathbf{x}, \mathbf{\omega_{o}})\) o
 \(L_{i,i}(\mathbf{x}, \mathbf{\omega_{i}}) \).
 
-Para ello necesitamos implementar todos los terminos que aparecen en la ecuación
+Para ello necesitamos implementar todos los términos que aparecen en la ecuación
 7:
 
 \begin{itemize}
@@ -147,7 +147,7 @@ Para ello necesitamos implementar todos los terminos que aparecen en la ecuació
         \(\mathbf{x}\) y \(\mathbf{\omega_{o}}\)
   \item \(f_r(\mathbf{x}, \mathbf{\omega_{i}}, \mathbf{\omega_{o}}) \) es
         devuelto por la instancia del material, representa una BTDF, por lo que
-        puede ser una BRDF difusa, una BRDF specular o una BTDF refracta. Cuando
+        puede ser una BRDF difusa, una BRDF especular o una BTDF refracta. Cuando
         se llama a esta función, además de devolver el valor de la BSDF, pone en
         \(\omega_{i}\) la siguiente dirección del camino. Si la BRDF es difusa,
         \(\omega_{i}\) se puede muestrear con la distribución del ángulo sólido
@@ -179,7 +179,7 @@ muestrear \(\Omega\). Figuras 2-6.
 
 El \textit{path tracer}, usando \textit{n spp} converge al resultado correcto de
 la integral de forma \(\frac{1}{\sqrt{n}}\) (Si asumimos que esos \textit{n}
-samples son independientes y \(\sigma\) es la desviación estandar de la
+samples son independientes y \(\sigma\) es la desviación estándar de la
 distribución, el valor medio calculado para el pixel, \(\bar{x}\), tendrá
 asociado un error estándar, \(\sigma_{\bar{x}}=\frac{\sigma}{\sqrt{n}}\)). Es
 decir, cuadruplicando \textit{n} se reduce el error a la mitad o en otras
@@ -341,16 +341,16 @@ la convergencia.
 
 \section{Iluminación global}
 
-El algoritmo \textit{path tracer} es capaz de simular todos los cuatro effectos
+El algoritmo \textit{path tracer} es capaz de simular todos los cuatro efectos
 de la iluminación global: \textit{hard shadows}, \textit{soft shadows},
 \textit{color bleeding} y \textit{causics}. \\
 
 Las \textbf{\textit{hard shadows}} son muy fácil de obtener con el algoritmo
-\textit{path tracer}, y ya hemos visto como lucen en las Figuras 2-6, basta con
+\textit{path tracer}, y ya hemos visto cómo lucen en las Figuras 2-6, basta con
 añadir a la escena luces puntuales. \\
 
-Las \textbf{\textit{soft shadows}} son muy fácil de obtener también. Figuras
-7-11, y basta con añadir a la escena alguna luz de area. \\
+Las \textbf{\textit{soft shadows}} son muy fáciles de obtener también. Figuras
+7-11, y basta con añadir a la escena alguna luz de área. \\
 
 \begin{figure}[H]
 \begin{subfigure}[h]{0.4\linewidth}
@@ -367,7 +367,7 @@ Las \textbf{\textit{soft shadows}} son muy fácil de obtener también. Figuras
 
 \textbf{\textit{Color bleeding}} es el fenómeno por el cual una superficie es
 coloreada por el color reflejado de otra superficie cercana. También es muy
-fácil de conseguir, basta con colocar dos objectos cerca uno del otro. Se puede
+fácil de conseguir, basta con colocar dos objetos cerca uno del otro. Se puede
 ver en las paredes de la caja de las Figuras 2-11 o con más claridad en la
 Figura 13 tanto en la pared de atrás, en el suelo, en la cara o en la espalda
 del conejo de plástico. \\
@@ -381,7 +381,7 @@ del conejo de plástico. \\
 Finalmente las \textbf{\textit{cáusticas}} son algo más difícil de conseguir ya
 que al tratarse de rayos de luz muy concentrados en un punto, es poco probable
 que el algoritmo genere estos caminos eficientemente. Sin embargo con un gran
-numero de \textit{samples per pixel}, la geometría y la iluminación correcta se
+número de \textit{samples per pixel}, la geometría y la iluminación correcta se
 puede conseguir: TODO CAMBIAR imagen
 \begin{figure}[H]
 \centering
