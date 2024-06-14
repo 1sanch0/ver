@@ -1,0 +1,6 @@
+*.pdf
+*.out
+*.toc
+*.log
+!imgs/*.png
+*.aux

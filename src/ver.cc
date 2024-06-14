@@ -44,8 +44,8 @@ int ver(int argc, char **argv) {
 
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})
-    .default_value("pathtracer");
-    // .default_value("photonmapper");
+    // .default_value("pathtracer");
+    .default_value("photonmapper");
 
   parser.addArgument("--width", "Image width")
     .default_value("256");
@@ -128,11 +128,11 @@ int ver(int argc, char **argv) {
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
-  // Scene scene = CornellBox(width, height);
+  Scene scene = CornellBox(width, height);
   // Scene scene = TriangleTextureTest(width, height);
   // Scene scene = SphereTextureTest(width, height);
   // Scene scene = Bunny(width, height);
-  Scene scene = Cardioid(width, height);
+  // Scene scene = Cardioid(width, height);
   // Scene scene = Cardioid2(width, height);
   // Scene scene = LTO(width, height);
   // width = height = 512;
@@ -146,7 +146,7 @@ int ver(int argc, char **argv) {
   if (integrator == "pathtracer")
     pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
   else if (integrator == "photonmapper")
-    photonmapper::render(scene.camera, scene, spp, maxDepth, sampler);
+    photonmapper::render(scene.camera, scene, spp, maxDepth, 1000000, 10000, 0.1, false, sampler); // TODO: args
 
   auto &colorFilm = scene.camera->film;
   auto &normalFilm = scene.camera->nFilm;
@@ -192,8 +192,10 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
   const size_t height = out.getHeight();
   const size_t colorRes = out.getColorRes();
 
+  std::cout << "Merging " << files[0] << std::endl;
   for (size_t i = 1; i < files.size(); i++) {
-    image::Film file = image::read(files[0]);
+    std::cout << "Merging " << files[i] << std::endl;
+    const image::Film file = image::read(files[i]);
     const size_t w = file.getWidth();
     const size_t h = file.getHeight();
     const size_t c = file.getColorRes();
@@ -214,4 +216,6 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
     image::tonemap::Reinhard2005().applyTo(out);
   else
     throw std::runtime_error("Unknown tonemap");
+  
+  image::write(filename, out);
 }
