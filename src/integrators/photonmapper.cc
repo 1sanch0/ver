@@ -19,17 +19,33 @@ namespace kernel {
   };
 
   class Cone : public Kernel {
+    // https://graphics.stanford.edu/courses/cs348b-00/course8.pdf
+    // Section 3.2.1
     public:
+      Cone(Float k_ = 1) : k(k_) { assert(k >= 1, "Cone kernel filter constant k, must be >= 1"); }
+
       Float operator ()(Float distance, Float rk) const override {
-        return std::max(0.0, 1.0 - distance / rk);
+        const Float w_pc = std::max(0.0, 1.0 - distance / (k * rk));
+        const Float a = (1.0 - 2.0 / (3.0 * k)) * M_PI * rk * rk;
+        return w_pc / a;
       }
+
+    private:
+      Float k;
   };
 
   class Gaussian : public Kernel {
+    // https://graphics.stanford.edu/courses/cs348b-00/course8.pdf
+    // Section 3.2.2
     public:
+      Gaussian(Float alpha = 0.918, Float beta = 1.953) : a(alpha), b(beta) {}
+
       Float operator ()(Float distance, Float rk) const override {
-        return std::exp(-distance * distance / (2 * rk * rk));
+        return a * (1.0 - (1.0 - std::exp(-b * distance * distance / (2.0 * rk * rk))) / (1.0 - std::exp(-b)));
       }
+
+    private:
+      Float a, b;
   };
 }
 
@@ -68,7 +84,7 @@ namespace photonmapper {
       if (brdf->isDelta) {
         // Delta material, just propagate
         r = Ray(x + wi * eps, wi);
-        flux *= Fr * cosThetaI / p; // TODO: check if this is correct. This should be 1 no?
+        flux *= Fr * cosThetaI / p;
       } else {
         const bool store = storeFirst || !isFirst;
         isFirst = false;
@@ -89,49 +105,17 @@ namespace photonmapper {
     return maps;
   }
 
-  std::list<Photon> randomWalk(const Ray &r, const Scene &scene, const Flux &flux, size_t depth, HemisphereSampler sampler, bool first = false) {
-    constexpr Float eps = 1e-4; // Self-shadow eps
-
-    std::list<Photon> photons;
-
-    if (depth == 0) return photons;
-
-    SurfaceInteraction interact, tmp;
-
-    if (!scene.intersect(r, interact)) return photons; // TODO: ENV MAP?
-
-    const Point x = interact.p;
-    const Direction n = interact.n;
-    const Direction wo = interact.wo;
-
-    const auto brdf = interact.material->sampleFr(interact);
-    if (brdf == nullptr) return photons; // Absorption
-
-    Direction wi;
-    const Spectrum Fr = brdf->sampleFr(sampler, interact, wi);
-    const Float cosThetaI = brdf->cosThetaI(sampler, wi, n);
-    const Float p = brdf->p(sampler, wi);
-
-    if (!brdf->isDelta) { // Only store photons in non-delta materials
-      photons.push_back(Photon(x, wo, flux * Fr * cosThetaI / p));
-    }
-    photons.splice(photons.end(), randomWalk(Ray(x + wi * eps, wi), scene, flux * Fr * cosThetaI / p, depth - 1, sampler, false));
-
-    return photons;
-  }
-
-  Spectrum Li(const Ray &r, const Scene &scene, const PhotonMap &photonMap, ulong k, Float rk, size_t depth, HemisphereSampler sampler, const kernel::Kernel &kernel) {
+  Spectrum Li(const Ray &r, const Scene &scene, const PhotonMap &globalMap, const PhotonMap &causticMap, ulong k, Float rk, size_t depth, HemisphereSampler sampler, bool nextEventEstimation, const kernel::Kernel &kernel) {
     constexpr Float eps = 1e-4; // Self-shadow eps
 
     SurfaceInteraction interact;
 
     if (depth == 0) return Spectrum();
-    if (!scene.intersect(r, interact)) return scene.envMapValue(r); // TODO: bien?
+    if (!scene.intersect(r, interact)) return scene.envMapValue(r);
 
     const Point x = interact.p;
     const Direction n = interact.n;
 
-    // TODO: bien?
     const Spectrum Le = interact.material->Le();
     if (Le.max() != 0) return Le; // Material emits
 
@@ -144,31 +128,45 @@ namespace photonmapper {
     const Float p = brdf->p(sampler, wi);
 
     if (brdf->isDelta)
-      return Li(Ray(x + wi * eps, wi), scene, photonMap, k, rk, depth - 1, sampler, kernel) * Fr * cosThetaI / p;
+      return Li(Ray(x + wi * eps, wi), scene, globalMap, causticMap, k, rk, depth - 1, sampler, nextEventEstimation, kernel);
 
     Spectrum L;
-    auto nearest = photonMap.nearest_neighbors(x, k, rk);
+    auto nearest = globalMap.nearest_neighbors(x, k, rk);
     for (const Photon *photon : nearest) {
       const Float distance = (x - photon->pos).norm();
       // if in same hemisphere
       if (n.dot(photon->wi) > 0) {
-        // L += Fr * cosThetaI / p * photon->flux * kernel(distance, rk);
         L += photon->flux * brdf->fr(interact, wi) * kernel(distance, rk);
       }
     }
-    // const Spectrum Lp = scene.directLight(interact) * brdf->fr(interact, wi); // M_PI cancels out in brdf->fr
-    const Spectrum Lp;
-    return Lp + L / (M_PI * rk * rk);
+
+    nearest = causticMap.nearest_neighbors(x, k, rk);
+    for (const Photon *photon : nearest) {
+      const Float distance = (x - photon->pos).norm();
+      // if in same hemisphere
+      if (n.dot(photon->wi) > 0) {
+        L += photon->flux * brdf->fr(interact, wi) * kernel(distance, rk);
+      }
+    }
+
+    if (nextEventEstimation) {
+      const Spectrum Lp = scene.directLight(interact, brdf);
+      L += Lp; // TODO: BIEN?
+    }
+
+    return L;
   }
 
-  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
+  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth,
+              size_t nRandomWalks, unsigned long k, float rk, bool nextEventEstimation, 
+              HemisphereSampler sampler) {
     const size_t width = camera->film.getWidth();
     const size_t height = camera->film.getHeight();
 
     // Parameters: (TODO: move to args)
-    size_t nRandomWalks = 400000 * 40;
-    unsigned long k = 100*10;
-    float rk = 0.01f;
+    // nRandomWalks = 400000 * 1;
+    // k = 100*10;
+    // rk = 0.1f;
     // ----
     // k = 10;
     // nRandomWalks = 1000;
@@ -208,7 +206,7 @@ namespace photonmapper {
         const Ray ray(light.p, wi); 
 
         // auto p = randomWalk(ray, scene, flux, maxDepth, sampler, true);
-        auto [caustic, global] = randomWalk2(ray, scene, flux, maxDepth, sampler, true);
+        auto [caustic, global] = randomWalk2(ray, scene, flux, maxDepth, sampler, !nextEventEstimation);
         #pragma omp critical
         {
           // photons.splice(photons.end(), p);
@@ -236,8 +234,7 @@ namespace photonmapper {
           Ray r = camera->getRay(i, j);
 
           scene.intersect(r, si);
-          L += Li(r, scene, photonMap, k, rk, maxDepth, sampler, kernel::Gaussian()) * 0.5;
-          L += Li(r, scene, photonMap2, k, rk, maxDepth, sampler, kernel::Gaussian()) * 0.5;
+          L += Li(r, scene, photonMap, photonMap2, k, rk, maxDepth, sampler, nextEventEstimation, kernel::Box());
 
           #pragma omp critical
           {

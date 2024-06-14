@@ -35,7 +35,9 @@ namespace photonmapper {
 
   using PhotonMap = nn::KDTree<Photon, 3, PhotonAxisPositition>;
 
-  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler = COSINE);
+  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth,
+              size_t nRandomWalks, unsigned long k, float rk, bool nextEventEstimation, 
+              HemisphereSampler sampler = COSINE);
 } // namespace photonmapper
 
 #endif // PHOTONMAPPER_H_
