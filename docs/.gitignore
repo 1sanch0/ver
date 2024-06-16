@@ -4,3 +4,4 @@
 *.log
 !imgs/*.png
 *.aux
+.auctex-auto/

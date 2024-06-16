@@ -17,7 +17,9 @@ TriangleMesh::TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply) {
                      ply.getPropertyIndexer("nz", NzIdx));
 
   bool hasUVs = (ply.getPropertyIndexer("u", UIdx) &&
-                 ply.getPropertyIndexer("v", VIdx));
+                 ply.getPropertyIndexer("v", VIdx))
+             || (ply.getPropertyIndexer("s", UIdx) &&
+                 ply.getPropertyIndexer("t", VIdx));
 
   bool hasIndices = ply.getPropertyIndexer("vertex_indices", indicesIdx);
   //bool hasIndices = ply.getPropertyIndexer("vertex_index", indicesIdx);
@@ -44,6 +46,19 @@ TriangleMesh::TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply) {
       ni.y = ply.elements[NyIdx.element_idx].take<float>(NyIdx.start + NyIdx.offset * i );
       ni.z = ply.elements[NzIdx.element_idx].take<float>(NzIdx.start + NzIdx.offset * i );
       n.push_back((transform * ni).normalize());
+    }
+  }
+
+  if (hasUVs) {
+    std::cout << "hasUVs" << std::endl;
+    for (size_t i = 0; i < XIdx.amount; i++) {
+      Vec2 uvi;
+
+      uvi.x = ply.elements[UIdx.element_idx].take<float>(UIdx.start + UIdx.offset * i );
+      uvi.y = ply.elements[VIdx.element_idx].take<float>(VIdx.start + VIdx.offset * i );
+      uv.push_back(uvi);
+
+      std::cout << "uvi: " << uv.size() << ", " << uvi << std::endl;
     }
   }
 

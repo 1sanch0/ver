@@ -7,7 +7,7 @@
 
 \title{Path tracer}
 \author{Javier Sancho Olano \\ \href{mailto:815520@unizar.es}{815520@unizar.es}}
-\date{Enero 2024}
+\date{Junio 2024}
 
 \begin{document}
 
@@ -391,6 +391,225 @@ puede conseguir: TODO CAMBIAR imagen
 \end{figure}
 
 \section{Extensiones}
+\subsection{Triángulos}
+Además de las esferas, se ha implementado el triángulo. Para ello he seguido mas
+o menos la estructura de datos propuesta por el libro
+\href{https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes}{pbrt}\footnote{https://www.pbr-book.org/3ed-2018/}
+para almacenar mayas de triangulos eficientemente.
+
+En resumen, una representación natural sería almacenar cada triángulo con las
+posiciones de sus tres vértices, sin embargo, una representación más eficiente
+en memoria sería almacenar la maya de triángulos con un array de posiciones,
+donde cada triangulo solo almacena los 3 índices de los vértices en el array de
+posiciones. Además se almacena un array de normales por vértice y un array de
+coordenadas de textura por vértice.
+
+La implementación de la intersección ray-triangle fue sorprendentemente sencilla
+gracias al gran artículo en Wikipedia y se basa en el algorimo de
+\href{https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm}{Möller-Trumbore}.
+
+\subsubsection{Modelos 3D}
+El siguiente paso tras implementar los triángulos es cargar modelos 3D en
+formato \textit{.ply}. Para ello he implementado mi propia mini-librería para
+cargar archivos \textit{.ply}.
+
+Vamos a ver algunas imágenes con modelos 3D de triángulos. Figura 15.
+
+\begin{figure}[H]
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/plastic_bunny.png}
+\caption{Stanford bunny de plástico}
+\end{subfigure}
+\hfill
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/nephroid.png}
+\caption{Cáustica en una taza de café}
+\end{subfigure}
+
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/crystal_teapot.png}
+\caption{Utah teapot de cristal}
+\end{subfigure}
+\hfill
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/lucy.png}
+\caption{Lucy en Cornell Box}
+\end{subfigure}
+\caption{Algunos modelos con triángulos}
+\end{figure}
+
+\subsection{Texturas}
+Las texturas son una generalización de los materiales. En lugar de devolver un
+coeficiente constante, devuelven un coeficiente que depende de la posición del
+punto de intersección. Por lo que es posible aplicar texturas diferentes para
+coeficientes difusos, especulares y refractantes.
+
+La implementación gira en torno a la interfaz \texttt{Texture}. De esta forma,
+he podido implementar texturas de color sólido, texturas de imagen y texturas
+procedurales.
+
+\subsubsection{Environment maps}
+
+Con las texturas ya implementadas, he añadido los \textit{environment maps}.
+Estos \textit{environment maps} simulan un entorno alrededor de las escenas
+calculando la posición en la textura esférica cuando un rayo no intersecta con
+la escena.
+
+\begin{figure}[H]
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/corneltex.png}
+\caption{Texturas en triángulos, esferas y mexcla de materiales con texturas}
+\end{subfigure}
+\hfill
+\begin{subfigure}[h]{0.4\linewidth}
+\includegraphics[width=\linewidth]{imgs/harambe.png}
+\caption{Modelos 3D con texturas y environment map}
+\end{subfigure}
+\caption{Algunos ejemplos de texturas}
+\end{figure}
+
+\subsubsection{Texturas procedurales}
 TODO
+
+\subsection{Multi-threading}
+Esto realmente cuesta considerarlo como una extensión pues gracias a OpenMP, con
+simplemente añadir \texttt{\#pragma omp parallel for} antes de un bucle for,
+este automáticamente te lo paraleliza. OpenMP viene incluido con el compilador
+(GCC 4.2 o nuevas y Clang/LLVM 3.7 o nuevas).
+
+Si usar esto no está permitido en la asignatura, basta con eliminar
+\texttt{-fopenmp} de las flags de compilación y el nuevo ejecutable funcionará
+pero sin multithreading. \\
+
+Todas las pruebas están hechas en un Intel(R) Core(TM) i7-10750H @ 2.60GHz turbo
+5.0GHz con 1.5 MiB de L2 cache y 12 MiB de L3 cache y con soporte para AVX2.
+
+\subsubsection{Mejoras en el tiempo de renderizado}
+
+Para analizar la mejora en el tiempo de renderizado con el multithreading, he
+renderizado la escena \textit{Cornell Box (256x256)} con distintos \textit{samples per
+  pixel} y he comparado el tiempo de renderizado con y sin multithreading:
+
+\begin{center}
+\begin{tabular}{||c c c||}
+ \hline
+ Samples per pixel & Multi thread tiempo (s) & Single thread tiempo (s) \\ [0.5ex]
+ \hline\hline
+ 2 & 2.2427 & 1.1333 \\
+ \hline
+ 8 & 2.2656 & 2.2783 \\
+ \hline
+ 32 & 3.2779 & 9.9038 \\
+ \hline
+ 128 & 10.1068 & 34.3494 \\
+ \hline
+ 512 & 43.4335 & 146.2601 \\ [1ex]
+ \hline
+\end{tabular}
+\end{center}
+
+Como se puede observar, el multithreading mejora dramáticamente el tiempo de
+renderizado en casi todos los casos. Sin embargo, observamos que en casos con un
+número muy bajo de \textit{samples per pixel} el multithreading puede ser
+contraproducente. Esto se debe a que el tiempo de crear los threads y
+sincronizarlos es mayor que el tiempo de renderizado.
+
+\subsection{BVH}
+Para acelerar el renderizado de las escenas, decidí implementar \textit{Bounding
+  Volume Hierarchy} (BVH). La idea es que en lugar de hacer intersecciones con
+todos los objetos de la escena, construir un árbol que divida el espacio en
+cajas y que cada caja contenga un número pequeño de objetos. De esta forma,
+cuando un rayo intersecte con una caja, solo se harán intersecciones con los
+objetos que contiene.
+
+Mi implementación se basa en gran medida en la de
+\href{https://www.pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies}{pbrt}\footnote{https://www.pbr-book.org/3ed-2018},
+y por simplicidad, el metodo de separar se limita a dividir el conjunto en dos
+subconjuntos de igual tamaño recursivamente.
+
+\subsubsection{Mejoras en el tiempo de renderizado}
+
+Para analizar la mejora en el tiempo de renderizado con el BVH, he renderizado
+la escena del \textit{Stanford Bunny (256x256)} con distintos \textit{samples
+  per pixel} y he comparado el tiempo de renderizado con y sin BVH. He escogido
+la escena del \textit{Stanford Bunny} ya que la escena de la \textit{Cornell
+  Box} es muy pequeña y no se aprecia la mejora del BVH. Además, los test se
+ralizaran con un solo thread.
+
+TODO TODO TODO TODO 
+
+\begin{center}
+\begin{tabular}{||c c c||}
+ \hline
+ Samples per pixel & tiempo (s) & tiempo w/BVH (s) \\ [0.5ex]
+ \hline\hline
+ 2 & 0 & 0 \\
+ \hline
+ 8 & 0 & 0 \\
+ \hline
+ 32 & 0 & 0 \\
+ \hline
+ 128 & 0 & 0 \\
+ \hline
+ 512 & 0 & 0 \\ [1ex]
+ \hline
+\end{tabular}
+\end{center}
+
+\subsection{Visualizador en tiempo real}
+Desde que comienzo la asignatura me llamó mucho la atención la idea de conseguir hacer un visualizador en tiempo real de los algoritmos visto en clase. En mis tiempos libres he estado probando diferentes métodos como implementar un \textit{path tracer} en un shader de GLSL o usar CUDA, pero todo esto significaba empezar de cero y no sabía muy bien como integrarlo a este trabajo.
+
+Hasta que no hace mucho descubri \href{https://www.raylib.com/}{Raylib}\footnote{https://www.raylib.com/}, una libreria en C para hacer videojuegos y me encanto desde el primer momento por su simplicidad.
+
+Para conseguir un visualizador en tiempo real, simplemente ejecuto unas cuantas iteraciones del path tracer, aplicó un tone-mapper y muevo la información de mi buffer a una textura de Raylib.
+
+Para hacer más rico el visualizador, he añadido dos modos, uno en el que solo sirve como visualizador donde puedes hacer zoom y pan en la imagen Y el segundo donde puedes mover la cámara con el teclado y el ratón como un FPS.
+
+TODO IMAGEN FPS
+
+\subsubsection{WebAssembly}
+Raylib permite compilar para practicamente cualquier plataforma por lo que me sentí gravemente tentado a compilarlo en WebAssembly y subirlo a \href{https://1sanch0.github.io/ver/}{GitHub Pages}\footnote{https://1sanch0.github.io/ver/}.
+
+\subsection{Camaras}
+
+La implementación de las cámaras se basa en una clase abstracta \texttt{Camera} 
+el metodo \texttt{getRay}. De esta forma, es posible implementar cualquier tipo
+de cámara simplemente heredando de \texttt{Camera} y sobreescribiendo el metodo
+\texttt{getRay}.
+
+Ademas, la clase \texttt{Camera} implementa los metodos \texttt{writeColor}, \texttt{writeDepth} y \texttt{writeNormal} para poder guardar la informacion del color, la profundidad y la normal de la escena respectivamente.
+
+TODO: IMAGENES DEPTH Y NORMAL
+
+\subsubsection{Perspective camera}
+TODO (pereza)
+
+\subsubsection{Orthographic camera}
+TODO (pereza)
+
+\subsection{Merger}
+TODO (creo que lo tengo mal programado incluso xdd)
+
+\subsection{Tone-mappers}
+TODO (pereza)
+
+\subsection{Argument Parser}
+Para hacer más fácil la ejecución del programa, he implementado un \textit{argument
+parser} basado en la libreria de python
+\href{https://docs.python.org/3/library/argparse.html}{argparse}\footnote{https://docs.python.org/3/library/argparse.html}.
+
+Mi implementación tiene una API muy similar y es muy fácil de usar.
+
+TODO IMAGEN --HELP
+
+\subsection{Barra de progreso}
+Para facilitar el seguimiento de los tiempos de renderizado he implementado una
+barra de progreso basada en la libreria de python
+\href{https://tqdm.github.io/}{tqdm}\footnote{https://tqdm.github.io/}.
+
+Mi implementación carace de muchas de las funcionalidades de la original pero es
+suficiente para mi proposito.
+
+TODO API E IMAGEN
 
 \end{document}

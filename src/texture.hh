@@ -30,7 +30,8 @@ class ConstantTexture : public Texture {
 class PPMTexture : public Texture {
   public:
     PPMTexture(const image::Framebuffer &fb_,
-               Float su_ = 1.0, Float sv_ = 1.0);
+               Float su_ = 1.0, Float sv_ = 1.0,
+               bool transpose = false, bool flip = false);
 
     Spectrum value(const SurfaceInteraction &interact) const override;
 
@@ -40,6 +41,7 @@ class PPMTexture : public Texture {
   private:
     image::Framebuffer fb;
     Float su, sv;
+    bool transpose, flip;
 };
 
 class NoiseTexture : public Texture {

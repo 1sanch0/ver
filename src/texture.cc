@@ -6,7 +6,8 @@ ConstantTexture::ConstantTexture(const Spectrum &k_) : k(k_) {}
 
 Spectrum ConstantTexture::value(const SurfaceInteraction &/*interact*/) const { return k; }
 
-PPMTexture::PPMTexture(const image::Framebuffer &fb_, Float su_, Float sv_) : fb(fb_), su{su_}, sv{sv_} {}
+PPMTexture::PPMTexture(const image::Framebuffer &fb_, Float su_, Float sv_,
+  bool transpose_, bool flip_) : fb(fb_), su{su_}, sv{sv_}, transpose{transpose_}, flip{flip_} {}
 
 Spectrum PPMTexture::value(const SurfaceInteraction &interact) const {
   const Float u = interact.u;
@@ -15,8 +16,13 @@ Spectrum PPMTexture::value(const SurfaceInteraction &interact) const {
   const size_t width = fb.getWidth() - 1;
   const size_t height = fb.getHeight() - 1;
 
-  const size_t i = static_cast<size_t>(u * su * width);
-  const size_t j = static_cast<size_t>(v * sv * height);
+  size_t i = static_cast<size_t>(u * su * width);
+  size_t j = static_cast<size_t>(v * sv * height);
+
+  if (transpose)
+    std::swap(i, j);
+  if (flip)
+    j = height - j;
 
   const image::Pixel c = fb.get(i, j);
 
