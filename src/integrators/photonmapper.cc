@@ -205,11 +205,9 @@ namespace photonmapper {
                                        std::cos(theta));
         const Ray ray(light.p, wi); 
 
-        // auto p = randomWalk(ray, scene, flux, maxDepth, sampler, true);
         auto [caustic, global] = randomWalk2(ray, scene, flux, maxDepth, sampler, !nextEventEstimation);
         #pragma omp critical
         {
-          // photons.splice(photons.end(), p);
           photons.splice(photons.end(), global);
           photons2.splice(photons2.end(), caustic);
           pbar.update();

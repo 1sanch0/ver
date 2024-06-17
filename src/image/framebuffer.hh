@@ -36,6 +36,11 @@ namespace image {
       Pixel operator /(Float scalar) const;
       Pixel& operator /=(Float scalar);
 
+      friend std::ostream& operator <<(std::ostream &os, const Pixel &p) {
+        os << "Pixel(" << p.r << ", " << p.g << ", " << p.b << ")";
+        return os;
+      }
+
     public:
       Float r, g, b;
   };

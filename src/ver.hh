@@ -39,8 +39,8 @@ typedef float Float;
 //typedef double Float;
 
 inline
-Float uniform(Float min, Float max) {
-  static thread_local std::mt19937 generator;
+Float uniform(Float min, Float max, uint seed = 5489u) {
+  static thread_local std::mt19937 generator(seed);
   std::uniform_real_distribution<Float> distr(min, max);
   return distr(generator);
 }

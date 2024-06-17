@@ -34,7 +34,7 @@ namespace pathtracer {
     return Lp + Li(Ray(x + wi * eps, wi), scene, depth - 1, sampler) * Fr * cosThetaI / p;
   }
 
-  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler) {
+  void render(std::shared_ptr<Camera> &camera, const Scene &scene, size_t spp, size_t maxDepth, HemisphereSampler sampler, uint seed) {
     const size_t width = camera->film.getWidth();
     const size_t height = camera->film.getHeight();
 
@@ -52,7 +52,7 @@ namespace pathtracer {
 
         Spectrum L;
         for (size_t s = 0; s < spp; s++) {
-          Ray r = camera->getRay(i, j);
+          Ray r = camera->getRay(i, j, seed);
 
           scene.intersect(r, si);
           L += Li(r, scene, maxDepth, sampler);

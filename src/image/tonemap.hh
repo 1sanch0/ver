@@ -27,6 +27,7 @@ namespace image {
         Float forward(Float x, Float max) const;
     };
 
+    // https://pages.cs.wisc.edu/~lizhang/courses/cs766-2012f/projects/hdr/Reinhard2005DRR.pdf
     class Reinhard2005 : public Tonemap {
       public:
         Reinhard2005(Float intensity = 0,

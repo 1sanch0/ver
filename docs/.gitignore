@@ -4,4 +4,8 @@
 *.log
 !imgs/*.png
 *.aux
+*.bbl
+*.bcf
+*.blg
+*.xml
 .auctex-auto/

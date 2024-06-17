@@ -4,6 +4,12 @@
 \usepackage{graphicx} % Required for inserting images
 \usepackage{subcaption} %  for subfigures environments
 \usepackage{float}
+\usepackage[
+ backend=biber,
+ style=alphabetic,
+ sorting=ynt
+]{biblatex}
+\addbibresource{report.bib}
 
 \title{Path tracer}
 \author{Javier Sancho Olano \\ \href{mailto:815520@unizar.es}{815520@unizar.es}}
@@ -382,12 +388,12 @@ Finalmente las \textbf{\textit{cáusticas}} son algo más difícil de conseguir 
 que al tratarse de rayos de luz muy concentrados en un punto, es poco probable
 que el algoritmo genere estos caminos eficientemente. Sin embargo con un gran
 número de \textit{samples per pixel}, la geometría y la iluminación correcta se
-puede conseguir: TODO CAMBIAR imagen
+puede conseguir:
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.6\linewidth]{imgs/nephroid.png}
 \caption{Taza de cerámica (difusa + especular) (medio metida en una mesa) en la
-  que se puede ver una cáustica nefroide}
+  que se puede ver una cáustica nefroide.}
 \end{figure}
 
 \section{Extensiones}
@@ -456,20 +462,35 @@ calculando la posición en la textura esférica cuando un rayo no intersecta con
 la escena.
 
 \begin{figure}[H]
-\begin{subfigure}[h]{0.4\linewidth}
-\includegraphics[width=\linewidth]{imgs/corneltex.png}
-\caption{Texturas en triángulos, esferas y mexcla de materiales con texturas}
-\end{subfigure}
-\hfill
-\begin{subfigure}[h]{0.4\linewidth}
-\includegraphics[width=\linewidth]{imgs/harambe.png}
-\caption{Modelos 3D con texturas y environment map}
-\end{subfigure}
-\caption{Algunos ejemplos de texturas}
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/corneltex.png}
+    \caption{Texturas en triángulos, esferas y mexcla de materiales con
+      texturas}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/harambe.png}
+    \caption{Modelos 3D con texturas y environment map}
+  \end{subfigure}
+  \caption{Algunos ejemplos de texturas}
 \end{figure}
 
 \subsubsection{Texturas procedurales}
-TODO
+
+Para las texturas procedurales he implementado texturas de \href{https://mrl.cs.nyu.edu/~perlin/noise/}{ruido de Perlin}\footnote{https://mrl.cs.nyu.edu/~perlin/noise/}.
+
+\begin{figure}[H]
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/orb.png}
+    \caption{Textura procedural en la esfera}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/orbm.png}
+    \caption{Textura procedural que \textit{intenta} imitar a un metal pulido}
+  \end{subfigure}
+  \caption{Algunos ejemplos de texturas procedurales}
+\end{figure}
 
 \subsection{Multi-threading}
 Esto realmente cuesta considerarlo como una extensión pues gracias a OpenMP, con
@@ -533,65 +554,164 @@ Para analizar la mejora en el tiempo de renderizado con el BVH, he renderizado
 la escena del \textit{Stanford Bunny (256x256)} con distintos \textit{samples
   per pixel} y he comparado el tiempo de renderizado con y sin BVH. He escogido
 la escena del \textit{Stanford Bunny} ya que la escena de la \textit{Cornell
-  Box} es muy pequeña y no se aprecia la mejora del BVH. Además, los test se
-ralizaran con un solo thread.
-
-TODO TODO TODO TODO 
+  Box} no tiene tantos triángulos y no se aprecia la mejora del BVH. Además, los
+test se ralizaran con un solo thread.
 
 \begin{center}
 \begin{tabular}{||c c c||}
  \hline
  Samples per pixel & tiempo (s) & tiempo w/BVH (s) \\ [0.5ex]
  \hline\hline
- 2 & 0 & 0 \\
+ 2 & 1,500.67* & 1.1887 \\
  \hline
- 8 & 0 & 0 \\
+ 8 & 5,416.25* & 4.4841 \\
  \hline
- 32 & 0 & 0 \\
+ 32 & 18,367.35* & 17.1715 \\
  \hline
- 128 & 0 & 0 \\
+ 128 & 66,859.90* & 68.8560 \\
  \hline
- 512 & 0 & 0 \\ [1ex]
+ 512 & 238,646.48* & 261.2148 \\ [1ex]
  \hline
 \end{tabular}
 \end{center}
 
+* Tiempo estimado, tiempo demasiado largo para esperar.
+
+Como se puede observar, el BVH mejora dramáticamente el tiempo de renderizado en
+todos los casos.
+
 \subsection{Visualizador en tiempo real}
-Desde que comienzo la asignatura me llamó mucho la atención la idea de conseguir hacer un visualizador en tiempo real de los algoritmos visto en clase. En mis tiempos libres he estado probando diferentes métodos como implementar un \textit{path tracer} en un shader de GLSL o usar CUDA, pero todo esto significaba empezar de cero y no sabía muy bien como integrarlo a este trabajo.
+Desde que comienzo la asignatura me llamó mucho la atención la idea de conseguir
+hacer un visualizador en tiempo real de los algoritmos visto en clase. En mis
+tiempos libres he estado probando diferentes métodos como implementar un
+\textit{path tracer} en un shader de GLSL o usar CUDA, pero todo esto
+significaba empezar de cero y no sabía muy bien como integrarlo a este trabajo.
 
-Hasta que no hace mucho descubri \href{https://www.raylib.com/}{Raylib}\footnote{https://www.raylib.com/}, una libreria en C para hacer videojuegos y me encanto desde el primer momento por su simplicidad.
+Hasta que no hace mucho descubri
+\href{https://www.raylib.com/}{Raylib}\footnote{https://www.raylib.com/}, una
+libreria en C para hacer videojuegos y me encanto desde el primer momento por su
+simplicidad.
 
-Para conseguir un visualizador en tiempo real, simplemente ejecuto unas cuantas iteraciones del path tracer, aplicó un tone-mapper y muevo la información de mi buffer a una textura de Raylib.
+Para conseguir un visualizador en tiempo real, simplemente ejecuto unas cuantas
+iteraciones del \textit{path tracer}, aplicó un \textit{tone-mapper} y muevo la
+información de mi buffer a una textura de Raylib.
 
-Para hacer más rico el visualizador, he añadido dos modos, uno en el que solo sirve como visualizador donde puedes hacer zoom y pan en la imagen Y el segundo donde puedes mover la cámara con el teclado y el ratón como un FPS.
-
-TODO IMAGEN FPS
+Para hacer más rico el visualizador, he añadido dos modos, uno en el que solo
+sirve como visualizador donde puedes hacer zoom y pan en la imagen Y el segundo
+donde puedes mover la cámara con el teclado y el ratón como un FPS.
 
 \subsubsection{WebAssembly}
-Raylib permite compilar para practicamente cualquier plataforma por lo que me sentí gravemente tentado a compilarlo en WebAssembly y subirlo a \href{https://1sanch0.github.io/ver/}{GitHub Pages}\footnote{https://1sanch0.github.io/ver/}.
+Raylib permite compilar para practicamente cualquier plataforma por lo que me
+sentí gravemente tentado a compilarlo en WebAssembly y subirlo a
+\href{https://1sanch0.github.io/ver/}{GitHub
+  Pages}\footnote{https://1sanch0.github.io/ver/}.
 
-\subsection{Camaras}
+\begin{figure}[h]
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/viewer.png}
+    \caption{Desktop viewer}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/wviewer.png}
+    \caption{Web viewer}
+  \end{subfigure}
+  \caption{Viewer en tiempo real}
+\end{figure}
+
+\subsection{Cámaras}
 
 La implementación de las cámaras se basa en una clase abstracta \texttt{Camera} 
 el metodo \texttt{getRay}. De esta forma, es posible implementar cualquier tipo
 de cámara simplemente heredando de \texttt{Camera} y sobreescribiendo el metodo
 \texttt{getRay}.
 
-Ademas, la clase \texttt{Camera} implementa los metodos \texttt{writeColor}, \texttt{writeDepth} y \texttt{writeNormal} para poder guardar la informacion del color, la profundidad y la normal de la escena respectivamente.
+Ademas, la clase \texttt{Camera} implementa los metodos \texttt{writeColor},
+\texttt{writeDepth} y \texttt{writeNormal} para poder guardar la informacion del
+color, la profundidad y la normal de la escena respectivamente. Esto fue muy
+útil a la hora de \textit{debuggear} debuggear.
 
-TODO: IMAGENES DEPTH Y NORMAL
+\begin{figure}[H]
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/normal.png}
+    \caption{Normales de la escena Stanford bunny}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/depth.png}
+    \caption{profundidad de la escena Stanford bunny}
+  \end{subfigure}
+  \caption{Información de la escena Stanford bunny. Los bordes dentados se deben
+    a que no se aplicado anti-aliasing en estas imagenes para ahorrar tiempo de
+    renderizado.}
+\end{figure}
 
-\subsubsection{Perspective camera}
-TODO (pereza)
+\subsubsection{Pinhole camera}
+Para la cámara pinhole, el método \texttt{getRay} simplemente devolverá un rayo
+en función del origen de la cámara, el pixel en el plano y los vectores
+ortogonales \texttt{left}, \texttt{up} y \texttt{forward}.
+
+Además, para mejorar la calidad de la imagen, se sampleara una posicion en el
+pixel y se devolverá un rayo que pase por esa posición. De esta forma, se
+consigue un efecto de anti-aliasing y el path tracer explora más caminos.
+
+TODO ilustracion y explicar un poco en la figura
 
 \subsubsection{Orthographic camera}
-TODO (pereza)
+Para la cámara ortográfica, el proceso es muy similar al de la cámara pinhole,
+pero en lugar de devolver un rayo que pase por una posición el origen, devolverá
+rayos paralelos entre sí y perpendiculares al plano de la imagen.
+
+TODO ilustracion
+
+\begin{figure}[H]
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/lucy.png}
+    \caption{Imagen generada con cámara pinhole.}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/lucy_o.png}
+    \caption{Imagen generada con cámara ortográfica.}
+  \end{subfigure}
+
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/crystal_teapot.png}
+    \caption{Ilustración de cámara pinhole}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.4\linewidth}
+    \includegraphics[width=\linewidth]{imgs/lucy.png}
+    \caption{Ilustración de cámara ortográfica}
+  \end{subfigure}
+  \caption{Algunos ejemplos de cámaras}
+\end{figure}
 
 \subsection{Merger}
-TODO (creo que lo tengo mal programado incluso xdd)
+Para escenas que requieren mucho tiempo de renderizado, he implementado una
+pequeña herramienta que permite unir varias imágenes hdr en una sola imagen ldr.
+De esta forma, se puede renderizar la escena en varias partes y unirlas al
+final, haciendo que el proceso sea más conveniente.
 
 \subsection{Tone-mappers}
-TODO (pereza)
+Las imágenes generadas por el path tracer suelen tener un rango dinámico muy
+alto que los monitores no pueden mostrar. Para solucionar esto, se aplican
+\textit{tone-mappers} que mapean el rango dinámico de la imagen a un rango
+dinámico que el monitor puede mostrar.
+
+La implementación gira en torno a la interfaz \texttt{Tonemapr}. De esta forma,
+he podido implementar \textit{tone-mappers} como \texttt{Gamma}, \texttt{Reinhard
+  2002} y \texttt{Reinhard 2005}.
+
+\subsubsection{Gamma}
+El primer \textit{tone-mapper} que he implementado es el \textit{gamma} y se basa en la teoria vista en el laboratoro.
+
+\subsubsection{Reinhard 2002}
+Adicionalmente, he implementado el \textit{tone-mapper} de Reinhard 2002.
+TODO
+
+\subsubsection{Reinhard 2005}
+TODO
 
 \subsection{Argument Parser}
 Para hacer más fácil la ejecución del programa, he implementado un \textit{argument
@@ -600,7 +720,10 @@ parser} basado en la libreria de python
 
 Mi implementación tiene una API muy similar y es muy fácil de usar.
 
-TODO IMAGEN --HELP
+\begin{figure}[h]
+  \centering \includegraphics[width=0.8\textwidth]{imgs/args.png}
+  \caption{Ayuda generada automáticamente por el argument parser.}
+\end{figure}
 
 \subsection{Barra de progreso}
 Para facilitar el seguimiento de los tiempos de renderizado he implementado una
@@ -610,6 +733,13 @@ barra de progreso basada en la libreria de python
 Mi implementación carace de muchas de las funcionalidades de la original pero es
 suficiente para mi proposito.
 
-TODO API E IMAGEN
+\begin{figure}[h]
+  \centering \includegraphics[width=1\textwidth]{imgs/lwpb.png}
+  \caption{Barra de progreso}
+\end{figure}
+
+\medskip
+
+\printbibliography
 
 \end{document}

@@ -29,7 +29,7 @@
 #define TEXTURES 6
 
 #define VERSION DEFAULT_FINAL
-// #define VERSION 6
+// #define VERSION 5
 
 Scene CornellBox(size_t width, size_t height) {
   Scene scene;
@@ -37,6 +37,7 @@ Scene CornellBox(size_t width, size_t height) {
   Point O(0.0, 0.0, -3.5);
   Direction left(-1, 0, 0), up(0, 1, 0), forward(0, 0, 3);
   auto cam = std::make_shared<PinholeCamera>(width, height, O, left, up, forward);
+  // auto cam = std::make_shared<OrthographicCamera>(width, height, O, left, up, forward);
   scene.set(cam);
 
   auto white = Direction(.9, .9, .9);
@@ -851,7 +852,7 @@ Scene LTO(size_t width, size_t height) {
   // Colors
   const auto none = Direction(0, 0, 0);
   const auto white = Direction(.9, .9, .9);
-  const auto sky = Spectrum(0.431, 0.694, 1.0);
+  // const auto sky = Spectrum(0.431, 0.694, 1.0)/2;
 
   const auto grayLow = Spectrum(0.467, 0.467, 0.467);
   const auto grayHigh = Spectrum(0.667, 0.663, 0.678);
@@ -864,6 +865,7 @@ Scene LTO(size_t width, size_t height) {
   // Image
   const auto woodImage = image::read("assets/wood.ppm");
   const auto uv = image::read("assets/uvchecker.ppm");
+  const auto sky = image::read("../envmap.ppm");
 
   // Textures
   const auto texWood = std::make_shared<PPMTexture>(woodImage.buffer);
@@ -875,26 +877,29 @@ Scene LTO(size_t width, size_t height) {
   const auto texCte02 = std::make_shared<ConstantTexture>(Spectrum(0.2, 0.2, 0.2));
   const auto texCte0 = std::make_shared<ConstantTexture>(Spectrum(0, 0, 0));
 
-  scene.set(std::make_unique<ConstantTexture>(sky));
+  // scene.set(std::make_unique<ConstantTexture>(sky));
+  scene.set(std::make_shared<PPMTexture>(image::read("../sky.ppm").buffer));
 
   // Camera
-  Point O(-1, 2, 1.2);
+  // Point O(-1, 2, 1.2);
+  Point O(2, 2, 0.8);
   Point lookAt(0, 0.3, 0);
   const auto cam = std::make_shared<PinholeCamera>(width, height, O, lookAt, 4+3);
   scene.set(cam);
 
   // Materials
-  const auto emitter = std::make_shared<Slides::Material>(none, none, none, white);
+  const auto emitter = std::make_shared<Slides::Material>(none, none, none, white*0.5);
   const auto whiteMaterial = std::make_shared<Slides::Material>(white, none, none, none);
   const auto LTOMaterial = std::make_shared<Slides::Material>(none, Direction(1, 1, 1)*0.96-white*1, white, none);
   // const auto ballMaterial = std::make_shared<Slides::Material>(grayLow, white-grayLow, none, none);
   const auto ballTexMaterial = std::make_shared<tex::Material>(texWood, texCte0, texCte0);
   const auto woodMaterial = std::make_shared<tex::Material>(texWood, texCte0, texCte0);
 
-  auto texNoise1 = std::make_shared<NoiseTexture>(0.5, 0.5, 1, 1, Direction(1,1,1), none);
-  auto texNoise22 = std::make_shared<NoiseTexture>(0.5, 0.5, 1, 1, none, Direction(1,1,1));
-  auto grayCte = std::make_shared<ConstantTexture>(none);
+  auto texNoise1 = std::make_shared<NoiseTexture>(0.3, 1.3+0.3, 1+1, 9+10, Direction(1,1,1), none);
+  auto texNoise22 = std::make_shared<NoiseTexture>(0.5, 1.3, 1, 9, none, orange);
+  auto grayCte = std::make_shared<ConstantTexture>(grayLow);
   const auto ballMaterial = std::make_shared<tex::Material>(grayCte, texNoise1, texCte0);
+  // const auto ballMaterial = std::make_shared<Slides::Material>(none, Direction(1,1,1), none, none);
 
   auto meshEmitter = Quad(Point(0, 3.2, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
@@ -904,7 +909,7 @@ Scene LTO(size_t width, size_t height) {
               std::make_shared<Triangle>(meshEmitter, 1),
               emitter));
 
-  auto meshFloor = Quad(Point(0, 0, 0), Direction(-1, 0, 0), Direction(0, 0, -1), Direction(0, 1, 0));
+  auto meshFloor = Quad(Point(0, 0, 0), Direction(-1.5, 0, 0), Direction(0, 0, -1.5), Direction(0, 1, 0));
   scene.add(std::make_unique<GeometricPrimitive>(
               std::make_shared<Triangle>(meshFloor, 0),
               woodMaterial));
@@ -919,6 +924,7 @@ Scene LTO(size_t width, size_t height) {
 
   simply::PLYFile LTO("../../LTO.ply");
   auto meshLTO = std::make_shared<TriangleMesh>(
+    Mat4::rotate(M_PI/2.0, 0, 1, 0) *
     Mat4::scale(2, 2, 2),
     LTO);
   

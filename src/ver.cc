@@ -1,16 +1,13 @@
 #include "ver.hh"
 #include "geometry.hh"
-
 #include "image/io.hh"
 #include "image/film.hh"
 #include "image/tonemap.hh"
-
 #include "integrators/pathtracer.hh"
 #include "integrators/photonmapper.hh"
-
 #include "utils/argparse.hh"
-
 #include "scenes.hh"
+#include <chrono>
 
 using namespace utils;
 
@@ -26,11 +23,11 @@ int main(int argc, char **argv) {
     return ver(argc, argv);
   #else
     (void)argc;(void)argv;
-    int width = 800/4;
-    int height = 500/4;
-    // Scene scene = CornellBox(width, height); 
+    int width = 500;
+    int height = 500;
+    Scene scene = CornellBox(width, height); 
     // Scene scene = Cardioid(width, height);
-    Scene scene = Bunny(width, height);
+    // Scene scene = Bunny(width, height);
     scene.makeBVH();
 
     Viewer viewer(scene);
@@ -44,8 +41,8 @@ int ver(int argc, char **argv) {
 
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})
-    // .default_value("pathtracer");
-    .default_value("photonmapper");
+    .default_value("pathtracer");
+    // .default_value("photonmapper");
 
   parser.addArgument("--width", "Image width")
     .default_value("256");
@@ -78,7 +75,7 @@ int ver(int argc, char **argv) {
     .choices({"solid_angle", "cosine"})
     .default_value("cosine");
   
-  parser.addArgument("-f", "Filename to save the image")
+  parser.addArgument("-o", "Filename to save the image")
     .default_value("test.ppm");
   
   parser.addArgument("--hdr", "Save as HDR")
@@ -124,36 +121,48 @@ int ver(int argc, char **argv) {
   std::string tonemap = args["-t"][0];
   Float gamma = std::stof(args["-g"][0]);
   HemisphereSampler sampler = (args["--sampler"][0] == "solid_angle") ? SOLID_ANGLE : COSINE;
-  std::string filename = args["-f"][0];
+  std::string filename = args["-o"][0];
   bool saveHDR = args["--hdr"][0] == "true";
   bool useBVH = args["--bvh"][0] == "true";
 
   Scene scene = CornellBox(width, height);
+  // Scene scene = CornellBoxR(width, height);
   // Scene scene = TriangleTextureTest(width, height);
   // Scene scene = SphereTextureTest(width, height);
   // Scene scene = Bunny(width, height);
   // Scene scene = Cardioid(width, height);
   // Scene scene = Cardioid2(width, height);
+  // width=height=200*4;
   // Scene scene = LTO(width, height);
+  // spp = 256/2;
   // width = height = 512;
 
-  if (useBVH)
+  if (useBVH) {
+    std::cout << "Building BVH..." << std::endl;
     scene.makeBVH();
+  }
 
   // if (camera == "orthographic")
   //   cam = OrthographicCamera(width, height, O, left, up, forward);
 
+  #ifdef NDEBUG
+  uint seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+  #else
+  uint seed = 5489u;
+  #endif
+
   if (integrator == "pathtracer")
-    pathtracer::render(scene.camera, scene, spp, maxDepth, sampler);
+    pathtracer::render(scene.camera, scene, spp, maxDepth, sampler, seed);
   else if (integrator == "photonmapper")
-    photonmapper::render(scene.camera, scene, spp, maxDepth, 1000000, 10000, 0.1, false, sampler); // TODO: args
+    photonmapper::render(scene.camera, scene, spp, maxDepth, 1000'000, 10'000, 0.1, false, sampler); // TODO: args
+    // photonmapper::render(scene.camera, scene, spp, maxDepth, 1000000, 10000, 0.1, false, sampler); // TODO: args
 
   auto &colorFilm = scene.camera->film;
   auto &normalFilm = scene.camera->nFilm;
   auto &depthFilm = scene.camera->dFilm;
   
   if (saveHDR) {
-    image::write("hdr_" + filename, colorFilm);
+    image::write(filename + ".hdr", colorFilm);
   } else {
     if (tonemap == "gamma")
       image::tonemap::Gamma(gamma, colorFilm.max()).applyTo(colorFilm);
@@ -173,19 +182,20 @@ int ver(int argc, char **argv) {
   }
 
   if (saveDepth) {
-    image::tonemap::Reinhard2002().applyTo(depthFilm);
+    // image::tonemap::Reinhard2002().applyTo(depthFilm);
+    image::tonemap::Gamma(1/2.2, depthFilm.max()).applyTo(depthFilm);
     image::write("depth_" + filename, depthFilm);
   }
 
   return 0;
 }
 
-// TODO: TEST
 void merge(const std::unordered_map<std::string, std::vector<std::string>> &args) {
   const auto &files = args.at("--merge");
-  const std::string filename = args.at("-f")[0];
+  const std::string filename = args.at("-o")[0];
   const std::string tonemap = args.at("-t")[0];
   const Float gamma = std::stof(args.at("-g")[0]);
+  const Float k = static_cast<Float>(files.size());
 
   image::Film out = image::read(files[0]);
   const size_t width = out.getWidth();
@@ -206,7 +216,7 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
     out.buffer += file.buffer;
   }
 
-  out.buffer /= static_cast<Float>(files.size());
+  out.buffer /= k;
 
   if (tonemap == "gamma")
     image::tonemap::Gamma(gamma, out.max()).applyTo(out);

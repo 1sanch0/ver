@@ -41,7 +41,7 @@ class Camera {
                (lookAt - eye_).normalize() * focalLength, color_res
                ) {}
     
-    virtual Ray getRay(size_t x, size_t y) const = 0;
+    virtual Ray getRay(size_t x, size_t y, uint seed = 5489u) const = 0;
 
     virtual void writeColor(size_t x, size_t y, const Direction &color) {
       assert(y < film.getWidth(), "x < width");
@@ -103,13 +103,13 @@ class PinholeCamera : public Camera {
   public:
     using Camera::Camera;
 
-    Ray getRay(size_t x, size_t y) const override {
+    Ray getRay(size_t x, size_t y, uint seed) const override {
       assert(x <= film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
       // Add a random number to the pixel to avoid aliasing
-      const Float su = uniform(0, delta_u);
-      const Float sv = uniform(0, delta_v);
+      const Float su = uniform(0, delta_u, seed);
+      const Float sv = uniform(0, delta_v, seed);
 
       // 0, 0 is the top left corner
       const Float u = x / static_cast<Float>(film.getWidth()) + su;
@@ -125,13 +125,13 @@ class OrthographicCamera : public Camera {
   public:
     using Camera::Camera;
 
-    Ray getRay(size_t x, size_t y) const override {
+    Ray getRay(size_t x, size_t y, uint seed) const override {
       assert(x <= film.getWidth(), "x < width");
       assert(y <= film.getHeight(), "y < height");
 
       // Add a random number to the pixel to avoid aliasing
-      const Float su = uniform(0, delta_u);
-      const Float sv = uniform(0, delta_v);
+      const Float su = uniform(0, delta_u, seed);
+      const Float sv = uniform(0, delta_v, seed);
 
       // 0, 0 is the top left corner
       const Float u = x / static_cast<Float>(film.getWidth()) + su;

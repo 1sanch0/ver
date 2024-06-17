@@ -166,9 +166,11 @@ void Viewer::handleInput() {
 
     // Mouse
     if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_RIGHT)) {
+      constexpr float sensitivity = 0.1f;
+
       raylib::Vector2 delta = raylib::GetMouseDelta();
-      Mat4 rotx = Mat4::rotate(delta.x * dt, 0, 1, 0);
-      Mat4 roty = Mat4::rotate(delta.y * dt, 1, 0, 0);
+      Mat4 rotx = Mat4::rotate(delta.x * dt * sensitivity, 0, 1, 0);
+      Mat4 roty = Mat4::rotate(delta.y * dt * sensitivity, 1, 0, 0);
 
       scene.camera->forward = rotx * roty * scene.camera->forward;
       scene.camera->left = scene.camera->forward.cross(Direction(0, 1, 0)).normalize();

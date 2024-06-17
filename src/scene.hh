@@ -25,10 +25,6 @@ class EnvironmentMap { // TODO: Review
       Float m = 2.0 * std::sqrt(r.d.x*r.d.x + r.d.y*r.d.y + (r.d.z + 1.0)*(r.d.z + 1.0));
       interact.u = r.d.x / m + 0.5;
       interact.v =  1.0 - (r.d.y / m + 0.5);
-      // const Float theta = std::acos(r.d.z);
-      // const Float phi = std::atan2(r.d.y, r.d.x);
-      // interact.u = phi / (2 * M_PI);
-      // interact.v = theta / M_PI;
 
       return texture->value(interact);
     }
