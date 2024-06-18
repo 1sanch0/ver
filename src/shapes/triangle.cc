@@ -58,7 +58,7 @@ TriangleMesh::TriangleMesh(const Mat4 &transform, const simply::PLYFile &ply) {
       uvi.y = ply.elements[VIdx.element_idx].take<float>(VIdx.start + VIdx.offset * i );
       uv.push_back(uvi);
 
-      std::cout << "uvi: " << uv.size() << ", " << uvi << std::endl;
+      // std::cout << "uvi: " << uv.size() << ", " << uvi << std::endl;
     }
   }
 

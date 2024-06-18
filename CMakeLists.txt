@@ -5,7 +5,7 @@ project(ver)
 set(CMAKE_CXX_STANDARD 17)
 
 # Options (by default it does not build the viewer)
-option(BUILD_VIEWER "Build the viewer" ON)
+option(BUILD_VIEWER "Build the viewer" OFF)
 set(PLATFORM "Desktop" CACHE STRING "Platform to build for (Desktop, Web)")
 
 # Fetch raylib
@@ -31,6 +31,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
 endif()
+
+file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR}) # Copy assets to build directory
 
 message(STATUS "CXX Flags: ${CMAKE_CXX_FLAGS}")
 message(STATUS "Platform: ${PLATFORM}")

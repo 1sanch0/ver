@@ -41,7 +41,8 @@ namespace kernel {
       Gaussian(Float alpha = 0.918, Float beta = 1.953) : a(alpha), b(beta) {}
 
       Float operator ()(Float distance, Float rk) const override {
-        return a * (1.0 - (1.0 - std::exp(-b * distance * distance / (2.0 * rk * rk))) / (1.0 - std::exp(-b)));
+        return a * (1.0 - (1.0 - std::exp(-b * distance * distance / (2.0 * rk * rk))) / (1.0 - std::exp(-b))) \
+                * M_1_PI * 1.0 / (rk * rk);
       }
 
     private:
@@ -187,6 +188,7 @@ namespace photonmapper {
 
     utils::lwpb pbar(nRandomWalks, "Photon Mapping");
 
+    uint seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
     // TODO: area lights????
     for (size_t i = 0; i < scene.lights.size(); i++) {
       const auto &light = scene.lights[i];
@@ -195,8 +197,8 @@ namespace photonmapper {
       #pragma omp parallel for
       for (size_t s = 0; s < n; s++) {
         // TODO: P mal
-        const Float theta = std::acos(2 * uniform(0, 1) - 1);
-        const Float phi = 2 * M_PI * uniform(0, 1);
+        const Float theta = std::acos(2 * uniform(0, 1, seed) - 1);
+        const Float phi = 2 * M_PI * uniform(0, 1, seed);
 
         const Flux flux = light.power * 4.0 * M_PI / n;
 
@@ -232,7 +234,7 @@ namespace photonmapper {
           Ray r = camera->getRay(i, j);
 
           scene.intersect(r, si);
-          L += Li(r, scene, photonMap, photonMap2, k, rk, maxDepth, sampler, nextEventEstimation, kernel::Box());
+          L += Li(r, scene, photonMap, photonMap2, k, rk, maxDepth, sampler, nextEventEstimation, kernel::Cone());
 
           #pragma omp critical
           {

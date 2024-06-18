@@ -626,6 +626,12 @@ el metodo \texttt{getRay}. De esta forma, es posible implementar cualquier tipo
 de cámara simplemente heredando de \texttt{Camera} y sobreescribiendo el metodo
 \texttt{getRay}.
 
+Además, para mejorar la calidad de la imagen, se sampleara una posicion en el
+pixel y se devolverá un rayo que pase por esa posición. De esta forma, se
+consigue un efecto de anti-aliasing y el path tracer explora más caminos.
+
+\subsubsection{Color, normal y depth buffers}
+
 Ademas, la clase \texttt{Camera} implementa los metodos \texttt{writeColor},
 \texttt{writeDepth} y \texttt{writeNormal} para poder guardar la informacion del
 color, la profundidad y la normal de la escena respectivamente. Esto fue muy
@@ -651,18 +657,10 @@ Para la cámara pinhole, el método \texttt{getRay} simplemente devolverá un ra
 en función del origen de la cámara, el pixel en el plano y los vectores
 ortogonales \texttt{left}, \texttt{up} y \texttt{forward}.
 
-Además, para mejorar la calidad de la imagen, se sampleara una posicion en el
-pixel y se devolverá un rayo que pase por esa posición. De esta forma, se
-consigue un efecto de anti-aliasing y el path tracer explora más caminos.
-
-TODO ilustracion y explicar un poco en la figura
-
 \subsubsection{Orthographic camera}
 Para la cámara ortográfica, el proceso es muy similar al de la cámara pinhole,
 pero en lugar de devolver un rayo que pase por una posición el origen, devolverá
 rayos paralelos entre sí y perpendiculares al plano de la imagen.
-
-TODO ilustracion
 
 \begin{figure}[H]
   \begin{subfigure}[h]{0.4\linewidth}
@@ -676,13 +674,13 @@ TODO ilustracion
   \end{subfigure}
 
   \begin{subfigure}[h]{0.4\linewidth}
-    \includegraphics[width=\linewidth]{imgs/crystal_teapot.png}
-    \caption{Ilustración de cámara pinhole}
+    \includegraphics[width=\linewidth]{imgs/pinhole.png}
+    \caption{Ilustración de los rayos de una cámara pinhole}
   \end{subfigure}
   \hfill
   \begin{subfigure}[h]{0.4\linewidth}
-    \includegraphics[width=\linewidth]{imgs/lucy.png}
-    \caption{Ilustración de cámara ortográfica}
+    \includegraphics[width=\linewidth]{imgs/ortho.png}
+    \caption{Ilustración de los rayos de una cámara ortográfica}
   \end{subfigure}
   \caption{Algunos ejemplos de cámaras}
 \end{figure}
@@ -703,15 +701,35 @@ La implementación gira en torno a la interfaz \texttt{Tonemapr}. De esta forma,
 he podido implementar \textit{tone-mappers} como \texttt{Gamma}, \texttt{Reinhard
   2002} y \texttt{Reinhard 2005}.
 
-\subsubsection{Gamma}
-El primer \textit{tone-mapper} que he implementado es el \textit{gamma} y se basa en la teoria vista en el laboratoro.
-
 \subsubsection{Reinhard 2002}
-Adicionalmente, he implementado el \textit{tone-mapper} de Reinhard 2002.
-TODO
+Adicionalmente, he implementado el \textit{tone-mapper} de Reinhard 2002 \cite{Reinhard2002}.
+Este \textit{tone-mapper} se basa en la ecuación:
+\begin{equation}
+  L_d = \frac{L \cdot (1 + \frac{L}{L_{\text{white}}^2})}{1 + L}
+\end{equation}
 
-\subsubsection{Reinhard 2005}
-TODO
+Los dos punto clave de este \textit{tone-mapper} son el ajuste automático de los parametros
+pues no necesita ningun parametro por aprte del usuario aparte del white que yo lo calculo en base 
+al maximo de la image.
+contraste
+
+\begin{figure}[H]
+  \begin{subfigure}[h]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{imgs/seymour.png}
+    \caption{Sin \textit{tone-mapper}}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{imgs/seymour_park_gamma.png}
+    \caption{"Gamma" con \(\gamma=2.2\).}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[h]{0.32\linewidth}
+    \includegraphics[width=\linewidth]{imgs/seymour_park_r02.png}
+    \caption{"Reinhard2002".}
+  \end{subfigure}
+  \caption{Comparativa de \textit{tone-mappers} en \textit{Seymour Park}}
+\end{figure}
 
 \subsection{Argument Parser}
 Para hacer más fácil la ejecución del programa, he implementado un \textit{argument

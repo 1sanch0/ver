@@ -3,7 +3,8 @@
 # Script to compile and re-open pdf when tex file is modified
 
 compile() {
-  pdflatex $1 | biber ${1%.*} | pdflatex $1
+  # pdflatex $1 | biber ${1%.*} | pdflatex $1
+  pdflatex $1
 }
 
 pdfname=${1%.*}.pdf

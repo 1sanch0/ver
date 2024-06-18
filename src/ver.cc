@@ -42,7 +42,6 @@ int ver(int argc, char **argv) {
   parser.addArgument("integrator", "Integrator to use")
     .choices({"pathtracer", "photonmapper"})
     .default_value("pathtracer");
-    // .default_value("photonmapper");
 
   parser.addArgument("--width", "Image width")
     .default_value("256");
@@ -65,7 +64,8 @@ int ver(int argc, char **argv) {
     .flag();
   
   parser.addArgument("-t", "Tonemap to use")
-    .choices({"gamma", "reinhard2002", "reinhard2005"})
+    .choices({"gamma", "reinhard2002"})
+    // .choices({"gamma", "reinhard2002", "reinhard2005"}) // reinhard2005 is bugged
     .default_value("gamma");
   
   parser.addArgument("-g", "Gamma value")
@@ -132,10 +132,11 @@ int ver(int argc, char **argv) {
   // Scene scene = Bunny(width, height);
   // Scene scene = Cardioid(width, height);
   // Scene scene = Cardioid2(width, height);
-  // width=height=200*4;
+  
+  // width = 1280/2;
+  // height = 720/2;
+  // integrator = "pathtracer";
   // Scene scene = LTO(width, height);
-  // spp = 256/2;
-  // width = height = 512;
 
   if (useBVH) {
     std::cout << "Building BVH..." << std::endl;
@@ -151,10 +152,17 @@ int ver(int argc, char **argv) {
   uint seed = 5489u;
   #endif
 
+  uint N = 100'000;
+  uint k = 1000;
+  Float radius = 0.3;
+  // integrator = "photonmapper";
+  // std::cout << "N: " << N << ", k: " << k << ", radius: " << radius << std::endl;
+
   if (integrator == "pathtracer")
     pathtracer::render(scene.camera, scene, spp, maxDepth, sampler, seed);
   else if (integrator == "photonmapper")
-    photonmapper::render(scene.camera, scene, spp, maxDepth, 1000'000, 10'000, 0.1, false, sampler); // TODO: args
+    photonmapper::render(scene.camera, scene, spp, maxDepth, N, k, radius, false, sampler); // TODO: args
+    // photonmapper::render(scene.camera, scene, spp, maxDepth, 1000'000, 10'000, 0.1, false, sampler); // TODO: args
     // photonmapper::render(scene.camera, scene, spp, maxDepth, 1000000, 10000, 0.1, false, sampler); // TODO: args
 
   auto &colorFilm = scene.camera->film;
