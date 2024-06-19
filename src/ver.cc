@@ -24,16 +24,7 @@ int main(int argc, char **argv) {
     return ver(argc, argv);
   #else
     (void)argc;(void)argv;
-    // int width = 500;
-    // int height = 500;
-    // Scene scene = CornellBox(width, height); 
-    // // Scene scene = Cardioid(width, height);
-    // // Scene scene = Bunny(width, height);
-    // scene.makeBVH();
-
-    // Viewer viewer(scene);
     Viewer viewer(500, 500);
-
     viewer.run();
   #endif
 }
@@ -46,6 +37,13 @@ int ver(int argc, char **argv) {
     .choices({"pathtracer", "photonmapper"})
     .default_value("pathtracer");
 
+  parser.addArgument("--scene", "Scene to render")
+    .choices({"cornellbox", "cornellboxA", "bunny", "orb", "nephroid",
+              "cornellboxDiffuse", "cornellboxDiffuseA",
+              "cornellboxTeapot", "cornellboxLucy", "cornellboxLucyA",
+              "cornellboxMonkey", "cornellboxEye"})
+    .default_value("cornellbox");
+
   parser.addArgument("--width", "Image width")
     .default_value("256");
   
@@ -54,9 +52,29 @@ int ver(int argc, char **argv) {
 
   parser.addArgument("--spp", "Samples per pixel")
     .default_value("64");
+
+  parser.addArgument("--camera", "Camera to use")
+    .choices({"pinhole", "orthographic"})
+    .default_value("pinhole");
+
+  parser.addArgument("-o", "Filename to save the image")
+    .default_value("a.ppm");
   
   parser.addArgument("-d", "Max recursion depth")
     .default_value("42");
+  
+  parser.addArgument("--photons", "Number of photons to shoot (PhotonMapper)")
+    .default_value("1000000");
+
+  parser.addArgument("--k", "Number of neighbors (PhotonMapper)")
+    .default_value("10000");
+
+  parser.addArgument("--radius", "Radius for photon search (PhotonMapper)")
+    .default_value("0.1");
+
+  parser.addArgument("--nee", "Use next event estimation (PhotonMapper)")
+    .default_value("false")
+    .flag();
 
   parser.addArgument("--normals", "Save scene normals image")
     .default_value("false")
@@ -68,7 +86,6 @@ int ver(int argc, char **argv) {
   
   parser.addArgument("-t", "Tonemap to use")
     .choices({"gamma", "reinhard2002"})
-    // .choices({"gamma", "reinhard2002", "reinhard2005"}) // reinhard2005 is bugged
     .default_value("gamma");
   
   parser.addArgument("-g", "Gamma value")
@@ -77,9 +94,6 @@ int ver(int argc, char **argv) {
   parser.addArgument("--sampler", "Hemisphere sampling method")
     .choices({"solid_angle", "cosine"})
     .default_value("cosine");
-  
-  parser.addArgument("-o", "Filename to save the image")
-    .default_value("test.ppm");
   
   parser.addArgument("--hdr", "Save as HDR")
     .default_value("false")
@@ -91,6 +105,7 @@ int ver(int argc, char **argv) {
   parser.addArgument("--merge", "Merge HDR files into a single one and exit")
     .nargs('*');
 
+  // TODO? Camera parameters?
 
   auto args = parser.parse(argc, argv);
 
@@ -101,72 +116,76 @@ int ver(int argc, char **argv) {
     exit(0);
   }
 
-  #if 0
-  // Print args
-  std::cout << "Arguments:" << std::endl;
-  for (const auto &arg : args) {
-    std::cout << "  " << arg.first << ": ";
-    for (const auto &value : arg.second)
-      std::cout << value << " ";
-    std::cout << std::endl;
-  }
-  exit(0);
-  #endif
+  const std::string &integrator = args["integrator"][0];
+  const std::string &scn = args["--scene"][0];
+  const int width = std::stoi(args["--width"][0]);
+  const int height = std::stoi(args["--height"][0]);
+  const size_t spp = std::stoi(args["--spp"][0]);
+  const std::string &camera = args["--camera"][0];
+  const std::string &filename = args["-o"][0];
+  const size_t maxDepth = std::stoi(args["-d"][0]);
+  const bool saveNormals = args["--normals"][0] == "true";
+  const bool saveDepth = args["--depth"][0] == "true";
+  const std::string &tonemap = args["-t"][0];
+  const Float gamma = std::stof(args["-g"][0]);
+  const HemisphereSampler sampler = (args["--sampler"][0] == "solid_angle") ? SOLID_ANGLE : COSINE;
+  const bool saveHDR = args["--hdr"][0] == "true";
+  const bool useBVH = args["--bvh"][0] == "true";
+  // Args for photonmapper
+  const size_t N = std::stoi(args["--photons"][0]);
+  const size_t k = std::stoi(args["--k"][0]);
+  const Float radius = std::stof(args["--radius"][0]);
+  const bool nee = args["--nee"][0] == "true";
 
-  // TODO: constify
-  std::string integrator = args["integrator"][0];
-  int width = std::stoi(args["--width"][0]);
-  int height = std::stoi(args["--height"][0]);
-  size_t spp = std::stoi(args["--spp"][0]);
-  size_t maxDepth = std::stoi(args["-d"][0]);
-  bool saveNormals = args["--normals"][0] == "true";
-  bool saveDepth = args["--depth"][0] == "true";
-  std::string tonemap = args["-t"][0];
-  Float gamma = std::stof(args["-g"][0]);
-  HemisphereSampler sampler = (args["--sampler"][0] == "solid_angle") ? SOLID_ANGLE : COSINE;
-  std::string filename = args["-o"][0];
-  bool saveHDR = args["--hdr"][0] == "true";
-  bool useBVH = args["--bvh"][0] == "true";
-
-  Scene scene = CornellBox(width, height);
-  // Scene scene = CornellBoxR(width, height);
-  // Scene scene = TriangleTextureTest(width, height);
-  // Scene scene = SphereTextureTest(width, height);
-  // Scene scene = Bunny(width, height);
-  // Scene scene = Cardioid(width, height);
-  // Scene scene = Cardioid2(width, height);
-  
-  // width = 1280/2;
-  // height = 720/2;
-  // integrator = "pathtracer";
-  // Scene scene = LTO(width, height);
+  // Scenes
+  Scene scene;
+  std::cout << "Loading scene..." << std::endl;
+  if (scn == "bunny")
+    scene = Bunny(width, height, camera);
+  else if (scn == "orb")
+    scene = LTO(width, height, camera);
+  else if (scn == "nephroid")
+    scene = Cardioid(width, height, camera);
+  else if (scn == "cornellboxDiffuse")
+    scene = CornellBox(width, height, camera, 0);
+  else if (scn == "cornellboxDiffuseA")
+    scene = CornellBox(width, height, camera, 1);
+  else if (scn == "cornellboxTeapot")
+    scene = CornellBox(width, height, camera, 2);
+  else if (scn == "cornellboxLucy")
+    scene = CornellBox(width, height, camera, 3);
+  else if (scn == "cornellboxLucyA")
+    scene = CornellBox(width, height, camera, 4);
+  else if (scn == "cornellbox")
+    scene = CornellBox(width, height, camera, 5);
+  else if (scn == "cornellboxA")
+    scene = CornellBox(width, height, camera, 6);
+  else if (scn == "cornellboxMonkey")
+    scene = CornellBox(width, height, camera, 7);
+  else if (scn == "cornellboxEye")
+    scene = CornellBoxR(width, height, camera);
+  else
+    throw std::runtime_error("(this should not happen) Unknown scene: " + scn);
 
   if (useBVH) {
     std::cout << "Building BVH..." << std::endl;
     scene.makeBVH();
   }
 
-  // if (camera == "orthographic")
-  //   cam = OrthographicCamera(width, height, O, left, up, forward);
-
+  // Seed
   #ifdef NDEBUG
   uint seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
   #else
   uint seed = 5489u;
   #endif
 
-  uint N = 100'000;
-  uint k = 1000;
-  Float radius = 0.3;
-  // integrator = "photonmapper";
-  // std::cout << "N: " << N << ", k: " << k << ", radius: " << radius << std::endl;
+  std::cout << "N: " << N << ", k: " << k << ", radius: " << radius << ", nee" << nee << std::endl;
 
+  // Render
   if (integrator == "pathtracer")
     pathtracer::render(scene.camera, scene, spp, maxDepth, sampler, seed);
   else if (integrator == "photonmapper")
-    photonmapper::render(scene.camera, scene, spp, maxDepth, N, k, radius, false, sampler); // TODO: args
-    // photonmapper::render(scene.camera, scene, spp, maxDepth, 1000'000, 10'000, 0.1, false, sampler); // TODO: args
-    // photonmapper::render(scene.camera, scene, spp, maxDepth, 1000000, 10000, 0.1, false, sampler); // TODO: args
+    photonmapper::render(scene.camera, scene, spp, maxDepth, N, k, radius, nee, sampler); // TODO: args
 
   auto &colorFilm = scene.camera->film;
   auto &normalFilm = scene.camera->nFilm;

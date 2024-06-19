@@ -41,8 +41,7 @@ namespace kernel {
       Gaussian(Float alpha = 0.918, Float beta = 1.953) : a(alpha), b(beta) {}
 
       Float operator ()(Float distance, Float rk) const override {
-        return a * (1.0 - (1.0 - std::exp(-b * distance * distance / (2.0 * rk * rk))) / (1.0 - std::exp(-b))) \
-                * M_1_PI * 1.0 / (rk * rk);
+        return a * (1.0 - (1.0 - std::exp(-b * distance * distance / (2.0 * rk * rk))) / (1.0 - std::exp(-b)));
       }
 
     private:
@@ -164,13 +163,8 @@ namespace photonmapper {
     const size_t width = camera->film.getWidth();
     const size_t height = camera->film.getHeight();
 
-    // Parameters: (TODO: move to args)
-    // nRandomWalks = 400000 * 1;
-    // k = 100*10;
-    // rk = 0.1f;
-    // ----
-    // k = 10;
-    // nRandomWalks = 1000;
+    if (scene.lights.empty())
+      throw std::runtime_error("No PointLights in scene (required for photon mapping)");
 
     auto start = std::chrono::high_resolution_clock::now();
 
