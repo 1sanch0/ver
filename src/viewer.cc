@@ -8,8 +8,8 @@
 Viewer::Viewer(size_t width, size_t height, size_t max_depth, HemisphereSampler sampler_)
   : currentScene(0), maxDepth(max_depth), sampler(sampler_), mode(Mode::IMAGE), idx(0), spp(1), camera({0}) {
   
-  scenes[0] = CornellBox(width, height);
-  scenes[1] = Bunny(width, height);
+  scenes[0] = CornellBox(width, height, "pinhole", 5);
+  scenes[1] = Bunny(width, height, "pinhole");
 
   scenes[0].makeBVH();
   scenes[1].makeBVH();

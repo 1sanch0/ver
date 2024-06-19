@@ -179,8 +179,6 @@ int ver(int argc, char **argv) {
   uint seed = 5489u;
   #endif
 
-  std::cout << "N: " << N << ", k: " << k << ", radius: " << radius << ", nee" << nee << std::endl;
-
   // Render
   if (integrator == "pathtracer")
     pathtracer::render(scene.camera, scene, spp, maxDepth, sampler, seed);

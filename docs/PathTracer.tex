@@ -9,7 +9,7 @@
  style=alphabetic,
  sorting=ynt
 ]{biblatex}
-\addbibresource{report.bib}
+\addbibresource{references.bib}
 
 \title{Path tracer}
 \author{Javier Sancho Olano \\ \href{mailto:815520@unizar.es}{815520@unizar.es}}
@@ -86,7 +86,8 @@ Aplicando la ecuación 2 a nuestra ecuación de render (Eq. 1):
   L_o(\mathbf{x}, \mathbf{\omega_{o}}) \approx L_e(\mathbf{x}, \mathbf{\omega_{o}}) + \frac{1}{N} \sum_{i=1}^{N} \frac{L_i(\mathbf{x}, \mathbf{\omega_{i}}) \cdot f_r(\mathbf{x}, \mathbf{\omega_{i}}, \mathbf{\omega_{o}}) \cdot  |\mathbf{n} \cdot \mathbf{\omega_{i}}|}{p(\omega_{i})}
 \end{equation}
 
-Para un camino (\(N=1\))
+
+Para un camino (N=1)
 \(\{\mathbf{x_{1}}, \mathbf{x_{2}}, ..., \mathbf{x_{k}}\}\),
 \(L_{i}(\mathbf{x_{j}}, \mathbf{\omega_{o}})=L_{o}(\mathbf{x_{j+1}}, \mathbf{\omega_{o}})\)
 y cuando la superficie emita, simplificaremos:
@@ -113,7 +114,7 @@ Por lo que la ecuación de render se puede reescribir como:
   \end{split}
 \end{equation}
 
-De esta forma podemos extender la ecuación 4 y estimar la radiancia directa para
+De esta forma podemos extender la ecuación 4 y estimar la radiancia directa desde
 luces puntuales:
 
 \begin{equation}
@@ -131,7 +132,7 @@ Y como la PDF de \(\omega_{p}\) siempre sera 1, la ecuación se simplifica a:
   \end{split}
 \end{equation}
 
-Finalmente aplicaremos el estimador de Monte Carlo (Eq. 3) para aproximar la
+Finalmente para aproximar la
 integral de render y la radiancia de un pixel \(L\) será la media de todos los
 caminos que pasan por el pixel:
 \begin{equation}
@@ -148,7 +149,7 @@ Para ello necesitamos implementar todos los términos que aparecen en la ecuaci�
 7:
 
 \begin{itemize}
-  \item \(L_e(\mathbf{x}, \mathbf{\omega_{o}})\) es devuelto por el la instancia
+  \item \(L_e(\mathbf{x}, \mathbf{\omega_{o}})\) es devuelto por la instancia
         del material y en nuestra implementación es constante para todo
         \(\mathbf{x}\) y \(\mathbf{\omega_{o}}\)
   \item \(f_r(\mathbf{x}, \mathbf{\omega_{i}}, \mathbf{\omega_{o}}) \) es
@@ -161,10 +162,9 @@ Para ello necesitamos implementar todos los términos que aparecen en la ecuaci�
         no se muestrea y se calcula deterministicamente.
 
         Cabe destacar que esta función en el código se llama \textit{sampleFr}
-        ya que ``\textit{samplea}'' \(\omega_{i}\) y es diferente de \textit{Fr}
+        ya que ``\textit{samplea}'' \(\omega_{i}\), y es diferente de \textit{Fr}
         no ``\textit{samplea}'' \(\omega_{i}\).
-  \item \(p(\mathbf{\omega_{i}})\) es acorde al muestreo de la BRDF difusa
-        seleccionado y es 1 en caso de ser BSDF delta.
+  \item \(p(\mathbf{\omega_{i}})\) es acorde al muestreo de la BRDF difusa y        es 1 en caso de ser BSDF delta.
   \item \(|\mathbf{n} \cdot \mathbf{\omega_{i}}|\) a.k.a \(\cos\theta_{i}\) es
         el factor que ajusta la contribución de la radiancia incidente respecto
         a \(\mathbf{\omega_{i}}\)
@@ -264,7 +264,7 @@ samples per pixel.
 
 Los materiales con BRDF difusa convergen más rápido que aquellos con BRDFs
 delta. En primer lugar, los materiales difusos podrán aprovechar el
-\textit{next-level estimation} para calcular la contribución de las luces
+\textit{next-event estimation} para calcular la contribución de las luces
 puntuales en ese punto. Además el muestreo del siguiente \(\mathbf{\omega_{i}}\)
 en la hemiesfera favorece la convergencia frente a un muestreo de
 \(\mathbf{\omega_{i}}\) determinista.
@@ -272,8 +272,8 @@ en la hemiesfera favorece la convergencia frente a un muestreo de
 \subsection{Fuentes de luz}
 Las escenas con luces puntuales convergen significativamente más rápido que
 aquellas con luces de área como se puede ver en Figuras 7-11. Este hecho se
-explica dado que las luces puntuales usan \textit{next-event estimation}, que
-muestrean directamente la luz de las fuentes puntuales en cada camino. En
+explica dado que con luces puntuales, usamos \textit{next-event estimation}, con el cual
+muestreamos directamente la luz de las fuentes puntuales en cada camino. En
 contraste, en el caso de las luces en área, se necesitarán más caminos para que
 alguno de ellos pueda explorar la dirección de la luz de área, lo que ralentiza
 la convergencia.
@@ -353,7 +353,7 @@ de la iluminación global: \textit{hard shadows}, \textit{soft shadows},
 
 Las \textbf{\textit{hard shadows}} son muy fácil de obtener con el algoritmo
 \textit{path tracer}, y ya hemos visto cómo lucen en las Figuras 2-6, basta con
-añadir a la escena luces puntuales. \\
+añadir a la escena luces puntuales y por supuesto objetos que provoquen la sombra. \\
 
 Las \textbf{\textit{soft shadows}} son muy fáciles de obtener también. Figuras
 7-11, y basta con añadir a la escena alguna luz de área. \\
@@ -373,14 +373,14 @@ Las \textbf{\textit{soft shadows}} son muy fáciles de obtener también. Figuras
 
 \textbf{\textit{Color bleeding}} es el fenómeno por el cual una superficie es
 coloreada por el color reflejado de otra superficie cercana. También es muy
-fácil de conseguir, basta con colocar dos objetos cerca uno del otro. Se puede
+fácil de conseguir, basta con colocar dos objetos que tengan componentes difusas cerca uno del otro. Se puede
 ver en las paredes de la caja de las Figuras 2-11 o con más claridad en la
 Figura 13 tanto en la pared de atrás, en el suelo, en la cara o en la espalda
 del conejo de plástico. \\
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\linewidth]{imgs/plastic_bunny.png}
+\includegraphics[width=0.5\linewidth]{imgs/plastic_bunny.png}
 \caption{Conejo de plástico}
 \end{figure}
 
@@ -388,30 +388,27 @@ Finalmente las \textbf{\textit{cáusticas}} son algo más difícil de conseguir 
 que al tratarse de rayos de luz muy concentrados en un punto, es poco probable
 que el algoritmo genere estos caminos eficientemente. Sin embargo con un gran
 número de \textit{samples per pixel}, la geometría y la iluminación correcta se
-puede conseguir:
+puede conseguir. Figura 14. En cuanto a la escena, es importante colocar luces de área y los materiales especulares o trasmisivos de forma que provoquen rayos de luz muy concentrados en materiales difusos.
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.6\linewidth]{imgs/nephroid.png}
-\caption{Taza de cerámica (difusa + especular) (medio metida en una mesa) en la
-  que se puede ver una cáustica nefroide.}
+\includegraphics[width=0.5\linewidth]{imgs/nephroid.png}
+\caption{Taza de cerámica (difusa + especular) en una mesa en la
+  que se puede ver una cáustica nefroide en el fondo de la taza.}
 \end{figure}
 
 \section{Extensiones}
 \subsection{Triángulos}
 Además de las esferas, se ha implementado el triángulo. Para ello he seguido mas
-o menos la estructura de datos propuesta por el libro
-\href{https://www.pbr-book.org/3ed-2018/Shapes/Triangle_Meshes}{pbrt}\footnote{https://www.pbr-book.org/3ed-2018/}
-para almacenar mayas de triangulos eficientemente.
+o menos la estructura de datos propuesta por el libro \cite{PBRT3e} \footnote{https://www.pbr-book.org/3ed-2018/}
+para almacenar mayas de triángulos eficientemente.
 
 En resumen, una representación natural sería almacenar cada triángulo con las
 posiciones de sus tres vértices, sin embargo, una representación más eficiente
 en memoria sería almacenar la maya de triángulos con un array de posiciones,
-donde cada triangulo solo almacena los 3 índices de los vértices en el array de
-posiciones. Además se almacena un array de normales por vértice y un array de
-coordenadas de textura por vértice.
+donde cada triángulo solo almacena los 3 índices de los vértices en el array de posiciones. De forma similar se guardara la información sobre las normales y las coordenadas de la textura por vértice.
 
 La implementación de la intersección ray-triangle fue sorprendentemente sencilla
-gracias al gran artículo en Wikipedia y se basa en el algorimo de
+gracias al artículo de Wikipedia y se basa en el algoritmo de
 \href{https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm}{Möller-Trumbore}.
 
 \subsubsection{Modelos 3D}
@@ -457,9 +454,10 @@ procedurales.
 \subsubsection{Environment maps}
 
 Con las texturas ya implementadas, he añadido los \textit{environment maps}.
-Estos \textit{environment maps} simulan un entorno alrededor de las escenas
-calculando la posición en la textura esférica cuando un rayo no intersecta con
-la escena.
+Estos \textit{environment maps} simulan un entorno alrededor de las escenas,
+simulando una esfera alrededor de esta y cuando un rayo no intersecta en
+la escena, se calcula la intersección con el \textit{environment maps},
+devolviendo la luz en ese punto.
 
 \begin{figure}[H]
   \begin{subfigure}[h]{0.4\linewidth}
@@ -477,7 +475,7 @@ la escena.
 
 \subsubsection{Texturas procedurales}
 
-Para las texturas procedurales he implementado texturas de \href{https://mrl.cs.nyu.edu/~perlin/noise/}{ruido de Perlin}\footnote{https://mrl.cs.nyu.edu/~perlin/noise/}.
+Para las texturas procedurales he implementado un generador de \href{https://mrl.cs.nyu.edu/~perlin/noise/}{ruido de Perlin}\footnote{https://mrl.cs.nyu.edu/~perlin/noise/}. 
 
 \begin{figure}[H]
   \begin{subfigure}[h]{0.4\linewidth}
@@ -496,11 +494,7 @@ Para las texturas procedurales he implementado texturas de \href{https://mrl.cs.
 Esto realmente cuesta considerarlo como una extensión pues gracias a OpenMP, con
 simplemente añadir \texttt{\#pragma omp parallel for} antes de un bucle for,
 este automáticamente te lo paraleliza. OpenMP viene incluido con el compilador
-(GCC 4.2 o nuevas y Clang/LLVM 3.7 o nuevas).
-
-Si usar esto no está permitido en la asignatura, basta con eliminar
-\texttt{-fopenmp} de las flags de compilación y el nuevo ejecutable funcionará
-pero sin multithreading. \\
+(GCC 4.2 o nuevas y Clang/LLVM 3.7 o nuevas). \\
 
 Todas las pruebas están hechas en un Intel(R) Core(TM) i7-10750H @ 2.60GHz turbo
 5.0GHz con 1.5 MiB de L2 cache y 12 MiB de L3 cache y con soporte para AVX2.
@@ -529,7 +523,7 @@ renderizado la escena \textit{Cornell Box (256x256)} con distintos \textit{sampl
 \end{tabular}
 \end{center}
 
-Como se puede observar, el multithreading mejora dramáticamente el tiempo de
+Como se puede observar, el multithreading mejora drásticamente el tiempo de
 renderizado en casi todos los casos. Sin embargo, observamos que en casos con un
 número muy bajo de \textit{samples per pixel} el multithreading puede ser
 contraproducente. Esto se debe a que el tiempo de crear los threads y
@@ -544,8 +538,8 @@ cuando un rayo intersecte con una caja, solo se harán intersecciones con los
 objetos que contiene.
 
 Mi implementación se basa en gran medida en la de
-\href{https://www.pbr-book.org/3ed-2018/Primitives_and_Intersection_Acceleration/Bounding_Volume_Hierarchies}{pbrt}\footnote{https://www.pbr-book.org/3ed-2018},
-y por simplicidad, el metodo de separar se limita a dividir el conjunto en dos
+\cite{PBRT3e}\footnote{https://www.pbr-book.org/3ed-2018},
+y por simplicidad, el método de separación se limita a dividir el conjunto en dos
 subconjuntos de igual tamaño recursivamente.
 
 \subsubsection{Mejoras en el tiempo de renderizado}
@@ -555,7 +549,7 @@ la escena del \textit{Stanford Bunny (256x256)} con distintos \textit{samples
   per pixel} y he comparado el tiempo de renderizado con y sin BVH. He escogido
 la escena del \textit{Stanford Bunny} ya que la escena de la \textit{Cornell
   Box} no tiene tantos triángulos y no se aprecia la mejora del BVH. Además, los
-test se ralizaran con un solo thread.
+test se realizarán con un solo thread.
 
 \begin{center}
 \begin{tabular}{||c c c||}
@@ -587,9 +581,9 @@ tiempos libres he estado probando diferentes métodos como implementar un
 \textit{path tracer} en un shader de GLSL o usar CUDA, pero todo esto
 significaba empezar de cero y no sabía muy bien como integrarlo a este trabajo.
 
-Hasta que no hace mucho descubri
+Hasta que no hace mucho descubrí
 \href{https://www.raylib.com/}{Raylib}\footnote{https://www.raylib.com/}, una
-libreria en C para hacer videojuegos y me encanto desde el primer momento por su
+librería en C para hacer videojuegos y me encanto desde el primer momento por su
 simplicidad.
 
 Para conseguir un visualizador en tiempo real, simplemente ejecuto unas cuantas
@@ -621,21 +615,21 @@ sentí gravemente tentado a compilarlo en WebAssembly y subirlo a
 
 \subsection{Cámaras}
 
-La implementación de las cámaras se basa en una clase abstracta \texttt{Camera} 
-el metodo \texttt{getRay}. De esta forma, es posible implementar cualquier tipo
-de cámara simplemente heredando de \texttt{Camera} y sobreescribiendo el metodo
+La implementación de las cámaras se basa en una clase abstracta \texttt{Camera} y 
+el método \texttt{getRay}. De esta forma, es posible implementar cualquier tipo
+de cámara simplemente heredando de \texttt{Camera} y sobrescribiendo el método
 \texttt{getRay}.
 
-Además, para mejorar la calidad de la imagen, se sampleara una posicion en el
+Además, para mejorar la calidad de la imagen, se sampleara una posición en el
 pixel y se devolverá un rayo que pase por esa posición. De esta forma, se
 consigue un efecto de anti-aliasing y el path tracer explora más caminos.
 
 \subsubsection{Color, normal y depth buffers}
 
-Ademas, la clase \texttt{Camera} implementa los metodos \texttt{writeColor},
-\texttt{writeDepth} y \texttt{writeNormal} para poder guardar la informacion del
+Además, la clase \texttt{Camera} implementa los métodos \texttt{writeColor},
+\texttt{writeDepth} y \texttt{writeNormal} para poder guardar la información del
 color, la profundidad y la normal de la escena respectivamente. Esto fue muy
-útil a la hora de \textit{debuggear} debuggear.
+útil a la hora de debuggear.
 
 \begin{figure}[H]
   \begin{subfigure}[h]{0.4\linewidth}
@@ -659,7 +653,7 @@ ortogonales \texttt{left}, \texttt{up} y \texttt{forward}.
 
 \subsubsection{Orthographic camera}
 Para la cámara ortográfica, el proceso es muy similar al de la cámara pinhole,
-pero en lugar de devolver un rayo que pase por una posición el origen, devolverá
+pero en lugar de devolver un rayo que pase por el origen, devolverá
 rayos paralelos entre sí y perpendiculares al plano de la imagen.
 
 \begin{figure}[H]
@@ -687,7 +681,7 @@ rayos paralelos entre sí y perpendiculares al plano de la imagen.
 
 \subsection{Merger}
 Para escenas que requieren mucho tiempo de renderizado, he implementado una
-pequeña herramienta que permite unir varias imágenes hdr en una sola imagen ldr.
+pequeña herramienta que permite unir varias imágenes HDR en una sola imagen LDR.
 De esta forma, se puede renderizar la escena en varias partes y unirlas al
 final, haciendo que el proceso sea más conveniente.
 
@@ -697,21 +691,20 @@ alto que los monitores no pueden mostrar. Para solucionar esto, se aplican
 \textit{tone-mappers} que mapean el rango dinámico de la imagen a un rango
 dinámico que el monitor puede mostrar.
 
-La implementación gira en torno a la interfaz \texttt{Tonemapr}. De esta forma,
-he podido implementar \textit{tone-mappers} como \texttt{Gamma}, \texttt{Reinhard
-  2002} y \texttt{Reinhard 2005}.
+La implementación gira en torno a la interfaz \texttt{Tonemaper}. De esta forma,
+he podido implementar \textit{tone-mappers} como \texttt{Gamma} y \texttt{Reinhard
+  2002} \cite{Reinhard2002}.
 
 \subsubsection{Reinhard 2002}
-Adicionalmente, he implementado el \textit{tone-mapper} de Reinhard 2002 \cite{Reinhard2002}.
 Este \textit{tone-mapper} se basa en la ecuación:
 \begin{equation}
   L_d = \frac{L \cdot (1 + \frac{L}{L_{\text{white}}^2})}{1 + L}
 \end{equation}
 
-Los dos punto clave de este \textit{tone-mapper} son el ajuste automático de los parametros
-pues no necesita ningun parametro por aprte del usuario aparte del white que yo lo calculo en base 
-al maximo de la image.
-contraste
+El principal beneficio de este \textit{tone-mapper} es que no necesita ningún
+parámetro por parte del usuario. \(L_{white}\) se calcula en base al máximo de la
+imagen. Además, en mi opinión, este \textit{tone-mapper} conserva mejor el contraste
+de la imagen.
 
 \begin{figure}[H]
   \begin{subfigure}[h]{0.32\linewidth}
@@ -733,7 +726,7 @@ contraste
 
 \subsection{Argument Parser}
 Para hacer más fácil la ejecución del programa, he implementado un \textit{argument
-parser} basado en la libreria de python
+parser} basado en la librería de Python
 \href{https://docs.python.org/3/library/argparse.html}{argparse}\footnote{https://docs.python.org/3/library/argparse.html}.
 
 Mi implementación tiene una API muy similar y es muy fácil de usar.
@@ -745,7 +738,7 @@ Mi implementación tiene una API muy similar y es muy fácil de usar.
 
 \subsection{Barra de progreso}
 Para facilitar el seguimiento de los tiempos de renderizado he implementado una
-barra de progreso basada en la libreria de python
+barra de progreso basada en la librería de Python
 \href{https://tqdm.github.io/}{tqdm}\footnote{https://tqdm.github.io/}.
 
 Mi implementación carace de muchas de las funcionalidades de la original pero es

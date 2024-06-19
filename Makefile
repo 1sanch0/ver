@@ -1,5 +1,5 @@
 DEBUG = 0
-PLATFORM = PLATFORM=PLATFORM_DESKTOP
+PLATFORM = PLATFORM_DESKTOP
 
 CC = g++
 
@@ -29,7 +29,7 @@ viewer: CFLAGS += -DVIEWER -isystem include/raylib/src -fopenmp -march=native -m
 viewer: LFLAGS += -lpthread -ldl -lX11
 
 ver.js: CC = emcc
-ver.js: PLATFORM = PLATFORM=PLATFORM_WEB
+ver.js: PLATFORM = PLATFORM_WEB
 ver.js: CFLAGS += -DVIEWER -isystem include/raylib/src
 ver.js: LFLAGS += -s USE_GLFW=3 -s ASYNCIFY -s TOTAL_MEMORY=64MB --preload-file assets/bunny.ply
 
