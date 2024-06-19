@@ -6,36 +6,39 @@
 #include "integrators/pathtracer.hh"
 #include "integrators/photonmapper.hh"
 #include "utils/argparse.hh"
-#include "scenes.hh"
 #include <chrono>
 
 using namespace utils;
 
 #ifdef VIEWER
 #include "viewer.hh"
-#endif
+#else
+#include "scenes.hh"
 
 int ver(int argc, char **argv); // Main program
 void merge(const std::unordered_map<std::string, std::vector<std::string>> &args);
+#endif
 
 int main(int argc, char **argv) {
   #ifndef VIEWER
     return ver(argc, argv);
   #else
     (void)argc;(void)argv;
-    int width = 500;
-    int height = 500;
-    Scene scene = CornellBox(width, height); 
-    // Scene scene = Cardioid(width, height);
-    // Scene scene = Bunny(width, height);
-    scene.makeBVH();
+    // int width = 500;
+    // int height = 500;
+    // Scene scene = CornellBox(width, height); 
+    // // Scene scene = Cardioid(width, height);
+    // // Scene scene = Bunny(width, height);
+    // scene.makeBVH();
 
-    Viewer viewer(scene);
+    // Viewer viewer(scene);
+    Viewer viewer(500, 500);
 
     viewer.run();
   #endif
 }
 
+#ifndef VIEWER
 int ver(int argc, char **argv) {
   ArgumentParser parser("ver", "A simple pathtracer / photonmapper from scratch (with tonemappers)");
 
@@ -237,3 +240,4 @@ void merge(const std::unordered_map<std::string, std::vector<std::string>> &args
   
   image::write(filename, out);
 }
+#endif

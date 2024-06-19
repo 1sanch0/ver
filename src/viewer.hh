@@ -13,7 +13,7 @@ namespace raylib {
 
 class Viewer {
   public:
-    Viewer(Scene &scene_, size_t max_depth = 42, HemisphereSampler sampler_ = COSINE);
+    Viewer(size_t width, size_t height, size_t max_depth = 42, HemisphereSampler sampler_ = COSINE);
 
     virtual ~Viewer();
 
@@ -25,7 +25,8 @@ class Viewer {
       GAME
     };
 
-    Scene &scene;
+    Scene scenes[2];
+    size_t currentScene;
     size_t maxDepth;
     HemisphereSampler sampler;
 
@@ -42,8 +43,8 @@ class Viewer {
     float dstXOffset, dstYOffset;
     float aspectRatio;
 
-    Direction resetFront, resetLeft, resetUp;
-    Point resetEye;
+    Direction resetFront[2], resetLeft[2], resetUp[2];
+    Point resetEye[2];
   
   private:
     void render();

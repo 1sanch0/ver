@@ -2,12 +2,20 @@
 
 #ifdef VIEWER
 
+#include "scenes.hh"
 #include "image/tonemap.hh"
 
-Viewer::Viewer(Scene &scene_, size_t max_depth, HemisphereSampler sampler_)
-  : scene(scene_), maxDepth(max_depth), sampler(sampler_), mode(Mode::IMAGE), idx(0), spp(1), camera({0}) {
-  int width = scene.camera->film.getWidth();
-  int height = scene.camera->film.getHeight();
+Viewer::Viewer(size_t width, size_t height, size_t max_depth, HemisphereSampler sampler_)
+  : currentScene(0), maxDepth(max_depth), sampler(sampler_), mode(Mode::IMAGE), idx(0), spp(1), camera({0}) {
+  
+  scenes[0] = CornellBox(width, height);
+  scenes[1] = Bunny(width, height);
+
+  scenes[0].makeBVH();
+  scenes[1].makeBVH();
+
+  // int width = scene.camera->film.getWidth();
+  // int height = scene.camera->film.getHeight();
 
   aspectRatio = static_cast<float>(width) / static_cast<float>(height);
 
@@ -24,10 +32,12 @@ Viewer::Viewer(Scene &scene_, size_t max_depth, HemisphereSampler sampler_)
   target = raylib::LoadRenderTexture(width, height);
   buffer = new raylib::Color[width * height];
 
-  resetFront = scene.camera->forward;
-  resetLeft = scene.camera->left;
-  resetUp = scene.camera->up;
-  resetEye = scene.camera->eye;
+  for (size_t i = 0; i < 2; i++) {
+    resetFront[i] = scenes[i].camera->forward;
+    resetLeft[i] = scenes[i].camera->left;
+    resetUp[i] = scenes[i].camera->up;
+    resetEye[i] = scenes[i].camera->eye;
+  }
 }
 
 Viewer::~Viewer() {
@@ -37,15 +47,15 @@ Viewer::~Viewer() {
 }
 
 void Viewer::run() {
-  size_t width = scene.camera->film.getWidth();
-  size_t height = scene.camera->film.getHeight();
+  size_t width = scenes[0].camera->film.getWidth();
+  size_t height = scenes[0].camera->film.getHeight();
       
   while (!raylib::WindowShouldClose()) {
     handleInput();
     render();
 
     // Copy pathtracer buffer
-    auto film = scene.camera->film;
+    auto film = scenes[currentScene].camera->film;
     // Scale by spp
     film.buffer /= spp;
 
@@ -85,8 +95,8 @@ void Viewer::run() {
 }
   
 void Viewer::render() {
-  size_t width = scene.camera->film.getWidth();
-  size_t height = scene.camera->film.getHeight();
+  size_t width = scenes[0].camera->film.getWidth();
+  size_t height = scenes[0].camera->film.getHeight();
 
   #pragma omp parallel
   for (size_t k = 0; k < 512*2; k++) {
@@ -99,12 +109,12 @@ void Viewer::render() {
     si.n = Direction(0, 0, 0);
 
     Spectrum L;
-    Ray r = scene.camera->getRay(i, j);
+    Ray r = scenes[currentScene].camera->getRay(i, j);
 
-    scene.intersect(r, si);
-    L += pathtracer::Li(r, scene, maxDepth, sampler);
+    scenes[currentScene].intersect(r, si);
+    L += pathtracer::Li(r, scenes[currentScene], maxDepth, sampler);
 
-    scene.camera->writeColor(i, j, L);
+    scenes[currentScene].camera->writeColor(i, j, L);
     // scene.camera->writeNormal(i, j, si.n);
     // camera->writeDepth(i, j, si.t);
 
@@ -122,6 +132,9 @@ void Viewer::tonemap(image::Film &film) {
 }
 
 void Viewer::handleInput() {
+  size_t width = scenes[0].camera->film.getWidth();
+  size_t height = scenes[0].camera->film.getHeight();
+
   float dt = raylib::GetFrameTime();
   static bool keyDown = false;
   bool relesead = false;
@@ -130,6 +143,15 @@ void Viewer::handleInput() {
   if (raylib::IsKeyPressed(raylib::KEY_TAB)) {
     if (mode == Mode::IMAGE) resetCamera2D();
     mode = (mode == Mode::IMAGE) ? Mode::GAME : Mode::IMAGE;
+  }
+
+  // Change scene
+  if (raylib::IsKeyPressed(raylib::KEY_ONE)) {
+    currentScene = 0;
+    resetTarget();
+  } else if (raylib::IsKeyPressed(raylib::KEY_TWO)) {
+    currentScene = 1;
+    resetTarget();
   }
 
   // Movement
@@ -152,17 +174,17 @@ void Viewer::handleInput() {
     // std::cout << "Keydown: " << keyDown << ", Released: " << relesead << std::endl;
 
     if (raylib::IsKeyDown(raylib::KEY_A))
-      scene.camera->eye += scene.camera->left.normalize() * dt;
+      scenes[currentScene].camera->eye += scenes[currentScene].camera->left.normalize() * dt;
     if (raylib::IsKeyDown(raylib::KEY_D))
-      scene.camera->eye -= scene.camera->left.normalize() * dt;
+      scenes[currentScene].camera->eye -= scenes[currentScene].camera->left.normalize() * dt;
     if (raylib::IsKeyDown(raylib::KEY_W))
-      scene.camera->eye += scene.camera->forward.normalize() * dt;
+      scenes[currentScene].camera->eye += scenes[currentScene].camera->forward.normalize() * dt;
     if (raylib::IsKeyDown(raylib::KEY_S))
-      scene.camera->eye -= scene.camera->forward.normalize() * dt;
+      scenes[currentScene].camera->eye -= scenes[currentScene].camera->forward.normalize() * dt;
     if (raylib::IsKeyDown(raylib::KEY_LEFT_SHIFT))
-      scene.camera->eye -= Direction(0, 1, 0) * dt;
+      scenes[currentScene].camera->eye -= Direction(0, 1, 0) * dt;
     if (raylib::IsKeyDown(raylib::KEY_SPACE))
-      scene.camera->eye += Direction(0, 1, 0) * dt;
+      scenes[currentScene].camera->eye += Direction(0, 1, 0) * dt;
 
     // Mouse
     if (raylib::IsMouseButtonDown(raylib::MOUSE_BUTTON_RIGHT)) {
@@ -172,14 +194,14 @@ void Viewer::handleInput() {
       Mat4 rotx = Mat4::rotate(delta.x * dt * sensitivity, 0, 1, 0);
       Mat4 roty = Mat4::rotate(delta.y * dt * sensitivity, 1, 0, 0);
 
-      scene.camera->forward = rotx * roty * scene.camera->forward;
-      scene.camera->left = scene.camera->forward.cross(Direction(0, 1, 0)).normalize();
-      scene.camera->up = scene.camera->left.cross(scene.camera->forward).normalize();
+      scenes[currentScene].camera->forward = rotx * roty * scenes[currentScene].camera->forward;
+      scenes[currentScene].camera->left = scenes[currentScene].camera->forward.cross(Direction(0, 1, 0)).normalize();
+      scenes[currentScene].camera->up = scenes[currentScene].camera->left.cross(scenes[currentScene].camera->forward).normalize();
 
-      if (scene.camera->film.getWidth() > scene.camera->film.getHeight())
-        scene.camera->up /= scene.camera->aspectRatio;
+      if (width > height)
+        scenes[currentScene].camera->up /= scenes[currentScene].camera->aspectRatio;
       else
-        scene.camera->left *= scene.camera->aspectRatio;
+        scenes[currentScene].camera->left *= scenes[currentScene].camera->aspectRatio;
     }
 
     if (relesead) resetTarget();
@@ -212,10 +234,10 @@ void Viewer::handleInput() {
     if (mode == Mode::GAME) {
       resetTarget();
 
-      scene.camera->eye = resetEye;
-      scene.camera->forward = resetFront;
-      scene.camera->left = resetLeft;
-      scene.camera->up = resetUp;
+      scenes[currentScene].camera->eye = resetEye[currentScene];
+      scenes[currentScene].camera->forward = resetFront[currentScene];
+      scenes[currentScene].camera->left = resetLeft[currentScene];
+      scenes[currentScene].camera->up = resetUp[currentScene];
     }
   }
 
@@ -273,10 +295,12 @@ void Viewer::resetCamera2D() {
 }
 
 void Viewer::resetTarget() {
+  size_t width = scenes[0].camera->film.getWidth();
+  size_t height = scenes[0].camera->film.getHeight();
   idx = 0;
   spp = 0;
-  for (size_t i = 0; i < scene.camera->film.getWidth() * scene.camera->film.getHeight(); i++) {
-    scene.camera->film.buffer[i] = image::Pixel{0, 0, 0};
+  for (size_t i = 0; i < width * height; i++) {
+    scenes[currentScene].camera->film.buffer[i] = image::Pixel{0, 0, 0};
     buffer[i] = raylib::Color{0, 0, 0, 255};
   }
 }
